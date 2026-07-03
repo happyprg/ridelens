@@ -28,7 +28,7 @@
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
     padding:18px 0 14px;border-bottom:1px solid var(--hairline);margin-bottom:22px;
   }
-  .logo{display:flex;align-items:baseline;gap:10px}
+  .logo{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:inherit}
   .logo b{font-size:19px;letter-spacing:-.02em}
   .logo b em{font-style:normal;color:var(--accent)}
   .logo span{font-size:12px;color:var(--muted)}
@@ -40,6 +40,20 @@
     font-variant-numeric:tabular-nums;text-align:right;
   }
   .ftp input:focus{outline:2px solid var(--c-speed);outline-offset:1px}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:14px 0 0}
+  .pgrid label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink2)}
+  .pgrid input,.pgrid select{
+    background:var(--chip);border:1px solid var(--hairline);border-radius:7px;color:var(--ink);
+    padding:8px 10px;font:inherit;font-size:13.5px;width:100%;
+  }
+  .pgrid input:focus,.pgrid select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .pgrid .chk-line{flex-direction:row;align-items:center;gap:8px;font-size:13px;align-self:end;padding:9px 0}
+  .psi-box{
+    margin-top:14px;background:var(--chip);border:1px solid var(--hairline);border-radius:10px;
+    padding:13px 14px;font-size:13px;color:var(--ink2);
+  }
+  .psi-box b{color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums}
+  .psi-box .psi-note{margin-top:7px;font-size:11.5px;color:var(--muted);line-height:1.5}
   .btn{
     background:var(--surface2);border:1px solid var(--hairline);color:var(--ink);
     border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;
@@ -204,10 +218,11 @@
 
 <div class="wrap">
   <header class="topbar">
-    <div class="logo"><b>Ride<em>Lens</em></b><span>업로드 없는 라이딩 분석</span></div>
+    <a class="logo" href="./" title="RideLens 홈으로"><b>Ride<em>Lens</em></b><span>업로드 없는 라이딩 분석</span></a>
     <div class="grow"></div>
     <span class="badge-pro" id="proBadge" hidden>PRO</span>
     <label class="ftp">FTP <input id="ftp" type="number" min="50" max="600" step="5" value="220"> W</label>
+    <button class="btn" id="btnProfile">프로필</button>
     <button class="btn" id="btnLib">보관함</button>
     <button class="btn" id="btnDemo">데모 라이딩 보기</button>
     <button class="btn primary" id="btnOpen">파일 열기 (.fit / .gpx)</button>
@@ -311,6 +326,31 @@
       <a class="btn" href="mailto:hongsgo@gmail.com?subject=RideLens%20Pro%20%EA%B5%AC%EB%A7%A4">₩29,000 구매하기</a>
       <div class="grow"></div>
       <button class="btn" id="btnLicClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="profOverlay" role="dialog" aria-modal="true" aria-label="프로필과 장비">
+  <div class="modal">
+    <h3>프로필 & 장비</h3>
+    <p>모든 값은 이 기기에만 저장됩니다. 몸무게·키는 파워 추정과 W/kg에, 자전거·타이어·휠은 권장 공기압 계산에 쓰입니다.</p>
+    <div class="pgrid">
+      <label>몸무게 (kg)<input id="pWeight" type="number" min="30" max="160" step="0.5"></label>
+      <label>키 (cm)<input id="pHeight" type="number" min="120" max="220" step="1"></label>
+      <label>자전거 무게 (kg)<input id="pBike" type="number" min="4" max="30" step="0.1"></label>
+      <label>타이어 너비 (mm)<input id="pTire" type="number" min="18" max="65" step="1"></label>
+      <label>휠 사이즈<select id="pWheel">
+        <option value="700c">700c / 29″ (622)</option>
+        <option value="650b">650b / 27.5″ (584)</option>
+        <option value="26">26″ (559)</option>
+      </select></label>
+      <label class="chk-line"><input id="pTubeless" type="checkbox"> 튜브리스</label>
+    </div>
+    <div class="psi-box" id="psiBox"></div>
+    <div class="row">
+      <button class="btn primary" id="btnProfSave">저장</button>
+      <div class="grow"></div>
+      <button class="btn" id="btnProfClose">닫기</button>
     </div>
   </div>
 </div>
@@ -741,8 +781,12 @@ function tile(lbl, val, unit, sub){
     ${sub?`<div class="sub">${sub}</div>`:""}</div>`;
 }
 
-function renderReport(pts, name){
-  DATA = {pts, name};
+function rideXp(s){
+  return Math.round((s.distance||0)/1000*10 + (s.gain||0)*0.2 + (s.tss||0)*3);
+}
+
+function renderReport(pts, name, est){
+  DATA = {pts, name, est: !!est};
   const ftp = +document.getElementById("ftp").value || 220;
   const s = computeStats(pts, ftp);
   showView("report");
@@ -754,19 +798,32 @@ function renderReport(pts, name){
     (dt ? dt.toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"short"}) + " · " : "") +
     `총 시간 ${fmt.dur(s.elapsed)}`;
 
+  const pr = getProfile();
+  const eTag = DATA.est ? " (추정)" : "";
   let tiles = "";
   tiles += tile("거리", fmt.km(s.distance), "km");
   tiles += tile("이동 시간", fmt.dur(s.moving), "");
+  if (s.elapsed != null && s.elapsed > s.moving + 1)
+    tiles += tile("휴식 시간", fmt.dur(s.elapsed - s.moving), "", `총 시간의 ${Math.round((s.elapsed - s.moving)/s.elapsed*100)}%`);
   tiles += tile("획득 고도", fmt.n0(s.gain), "m");
   tiles += tile("평균 속도", s.avgSpd!=null?(s.avgSpd*3.6).toFixed(1):"–", "km/h", "최고 " + fmt.kmh(s.maxSpd));
   if (s.avgPwr != null){
-    tiles += tile("평균 파워", fmt.n0(s.avgPwr), "W", "최대 " + fmt.n0(s.maxPwr) + " W · " + fmt.n0(s.kj) + " kJ");
-    if (s.np != null) tiles += tile("NP", fmt.n0(s.np), "W", "IF " + s.if.toFixed(2));
-    if (s.tss != null) tiles += tile("TSS", fmt.n0(s.tss), "", `FTP ${ftp} W 기준`);
+    const wkg = pr.weight ? ` · ${(s.avgPwr/pr.weight).toFixed(2)} W/kg` : "";
+    tiles += tile("평균 파워" + eTag, fmt.n0(s.avgPwr), "W", "최대 " + fmt.n0(s.maxPwr) + " W · " + fmt.n0(s.kj) + " kJ" + wkg);
+    if (s.np != null) tiles += tile("NP" + eTag, fmt.n0(s.np), "W", "IF " + s.if.toFixed(2));
+    if (s.tss != null) tiles += tile("TSS" + eTag, fmt.n0(s.tss), "", `FTP ${ftp} W 기준`);
   }
   if (s.avgHr != null) tiles += tile("평균 심박", fmt.n0(s.avgHr), "bpm", "최대 " + fmt.n0(s.maxHr));
   if (s.avgCad != null) tiles += tile("평균 케이던스", fmt.n0(s.avgCad), "rpm");
+  const xp = rideXp(s);
+  tiles += tile("경험치", "+" + fmt.n0(xp), "XP", `<span id="xpSub">이번 라이딩</span>`);
   document.getElementById("tiles").innerHTML = tiles;
+  dbAll().then(rides => {
+    const tot = rides.reduce((a, r) => a + rideXp(r.stats || {}), 0);
+    const lv = Math.floor(Math.sqrt(tot/300)) + 1;
+    const el = document.getElementById("xpSub");
+    if (el) el.textContent = `보관함 누적 ${fmt.n0(tot)} XP · Lv.${lv}`;
+  }).catch(()=>{});
 
   // charts
   charts = [];
@@ -777,7 +834,7 @@ function renderReport(pts, name){
     data: downsample(pts, p=>p.eleS, 700), fmt: v=>fmt.n0(v)+" m"});
   if (has("spd")) buildChart(box, {title:"속도", color:"var(--c-speed)", zeroBase:true,
     data: downsample(pts, p=>p.spd==null?null:p.spd*3.6, 700), fmt: v=>fmt.n1(v)+" km/h"});
-  if (has("pwr")) buildChart(box, {title:"파워", color:"var(--c-pwr)", zeroBase:true,
+  if (has("pwr")) buildChart(box, {title:"파워" + (DATA.est ? " (추정)" : ""), color:"var(--c-pwr)", zeroBase:true,
     data: downsample(pts, p=>p.pwr, 700), fmt: v=>fmt.n0(v)+" W"});
   if (has("hr")) buildChart(box, {title:"심박", color:"var(--c-hr)", zeroBase:false,
     data: downsample(pts, p=>p.hr, 700), fmt: v=>fmt.n0(v)+" bpm"});
@@ -868,6 +925,58 @@ function applyProUi(){
 function openLic(){ document.getElementById("licOverlay").classList.add("open"); document.getElementById("licKey").focus(); }
 function closeLic(){ document.getElementById("licOverlay").classList.remove("open"); document.getElementById("licErr").style.display="none"; }
 
+/* ---------------- profile & equipment ---------------- */
+const PROF_DEF = {weight:70, height:172, bike:9, tire:28, wheel:"700c", tubeless:false};
+function getProfile(){
+  try{ return {...PROF_DEF, ...(JSON.parse(localStorage.getItem("ridelens_profile")) || {})}; }
+  catch(e){ return {...PROF_DEF}; }
+}
+function saveProfile(pr){ try{ localStorage.setItem("ridelens_profile", JSON.stringify(pr)); }catch(e){} }
+
+// 15% 타이어 드롭 근사(Berto 계열): psi = 304 · 바퀴하중(kg) / 타이어너비(mm)^1.6
+// 휠 직경이 작을수록 같은 압력에서 접지 변형이 유리해 소폭 낮춰 잡는다. 튜브리스 -10%.
+function tirePressure(pr){
+  const sys = pr.weight + pr.bike;
+  const wheelF = {"700c":1, "650b":0.97, "26":0.94}[pr.wheel] || 1;
+  const tlF = pr.tubeless ? 0.9 : 1;
+  const psi = load => 304 * load / Math.pow(pr.tire, 1.6) * wheelF * tlF;
+  const clamp = v => Math.max(18, Math.min(120, v));
+  return {front: clamp(psi(sys*0.4)), rear: clamp(psi(sys*0.6))};
+}
+function renderPsi(pr){
+  const p = tirePressure(pr);
+  const bar = v => (v*0.0689476).toFixed(1);
+  document.getElementById("psiBox").innerHTML =
+    `권장 공기압 — 앞 <b>${Math.round(p.front)} psi</b> (${bar(p.front)} bar) · 뒤 <b>${Math.round(p.rear)} psi</b> (${bar(p.rear)} bar)`
+    + `<div class="psi-note">몸무게 ${pr.weight}kg + 자전거 ${pr.bike}kg, ${pr.tire}mm 타이어(${pr.wheel}${pr.tubeless?", 튜브리스":""}) 기준 안장 하중 40:60 가정.
+       타이어·림에 표기된 최소/최대 공기압을 넘지 않도록 하고, 노면이 거칠면 3~5 psi 낮춰 보세요.</div>`;
+}
+
+/* ---------------- power estimation (파워미터 없는 파일) ---------------- */
+function hasPower(pts){ return pts.some(p => p.pwr != null && p.pwr > 0); }
+// 속도·경사·가속으로 구동 파워를 물리 모델로 추정: 구름저항 + 중력 + 공기저항 + 관성, 전달효율 97.5%
+function estimatePower(pts){
+  const pr = getProfile();
+  const m = pr.weight + pr.bike, g = 9.81, crr = 0.005, rho = 1.2, eta = 0.975;
+  const bsa = 0.007184 * Math.pow(pr.height, 0.725) * Math.pow(pr.weight, 0.425); // Du Bois 체표면적
+  const cda = Math.max(0.22, Math.min(0.45, bsa * 0.18)); // 후드 포지션 근사
+  for (let i = 0; i < pts.length; i++){
+    const p = pts[i];
+    if (p.spd == null){ p.pwr = null; continue; }
+    const j = Math.max(0, i - 5);
+    const dd = p.dist - pts[j].dist;
+    const grade = (dd > 3 && p.eleS != null && pts[j].eleS != null) ? (p.eleS - pts[j].eleS) / dd : 0;
+    let a = 0;
+    if (i > 0 && pts[i-1].spd != null && p.t != null && pts[i-1].t != null){
+      const dt = Math.max(1, p.t - pts[i-1].t);
+      a = Math.max(-0.5, Math.min(0.5, (p.spd - pts[i-1].spd) / dt));
+    }
+    const v = p.spd;
+    const w = (m*g*v*(crr + grade) + 0.5*rho*cda*v*v*v + m*a*v) / eta;
+    p.pwr = v < 1 ? 0 : Math.round(Math.max(0, Math.min(1500, w)));
+  }
+}
+
 /* ---------------- storage (IndexedDB) ---------------- */
 function openDb(){
   return new Promise((res, rej)=>{
@@ -911,19 +1020,19 @@ function packPoints(pts){
   return out;
 }
 
-function makeRecord(pts, name, id){
+function makeRecord(pts, name, id, est){
   const ftp = +document.getElementById("ftp").value || 220;
   const s = computeStats(pts, ftp);
   return { id: id || Date.now(), name,
     date: s.startTime ? s.startTime*1000 : Date.now(),
-    ftp, stats: s, points: packPoints(pts) };
+    ftp, est: !!est, stats: s, points: packPoints(pts) };
 }
 
 async function saveRide(){
   if (!DATA) return;
   const name = prompt("보관함에 저장할 이름", DATA.name);
   if (name === null) return;
-  await dbPut(makeRecord(DATA.pts, name || DATA.name));
+  await dbPut(makeRecord(DATA.pts, name || DATA.name, null, DATA.est));
   const b = document.getElementById("btnSave");
   b.textContent = "저장됨 ✓"; b.disabled = true;
   setTimeout(()=>{ b.textContent = "보관함에 저장"; b.disabled = false; }, 1600);
@@ -933,7 +1042,7 @@ async function loadRide(id){
   const rides = await dbAll();
   const r = rides.find(x=>x.id === id);
   if (!r) return;
-  renderReport(r.points, r.name);
+  renderReport(r.points, r.name, r.est);
 }
 
 /* ---------------- library (갤러리) ---------------- */
@@ -1414,14 +1523,16 @@ async function parseFile(f){
   else throw new Error("지원하지 않는 형식입니다 (.fit / .gpx)");
   pts = prepare(pts.filter(p => p.dist != null || p.lat != null));
   if (pts.length < 10) throw new Error("데이터 포인트가 부족합니다");
-  return {pts, name};
+  const est = !hasPower(pts);
+  if (est) estimatePower(pts);
+  return {pts, name, est};
 }
 
 async function handleFile(f){
   $err.style.display = "none";
   try{
-    const {pts, name} = await parseFile(f);
-    renderReport(pts, name);
+    const {pts, name, est} = await parseFile(f);
+    renderReport(pts, name, est);
   }catch(e){ showError(e.message); }
 }
 
@@ -1434,8 +1545,8 @@ async function handleFiles(files){
   let id = Date.now();
   for (const f of files){
     try{
-      const {pts, name} = await parseFile(f);
-      await dbPut(makeRecord(pts, name, id++));
+      const {pts, name, est} = await parseFile(f);
+      await dbPut(makeRecord(pts, name, id++, est));
       ok++;
     }catch(e){ failed.push(f.name); }
   }
@@ -1462,8 +1573,43 @@ const $ftp = document.getElementById("ftp");
 try{ const v = localStorage.getItem("ridelens_ftp"); if (v) $ftp.value = v; }catch(e){}
 $ftp.addEventListener("change", ()=>{
   try{ localStorage.setItem("ridelens_ftp", $ftp.value); }catch(e){}
-  if (DATA) renderReport(DATA.pts, DATA.name);
+  if (DATA) renderReport(DATA.pts, DATA.name, DATA.est);
 });
+
+/* 프로필 & 장비 모달 */
+const PROF_IDS = {weight:"pWeight", height:"pHeight", bike:"pBike", tire:"pTire", wheel:"pWheel", tubeless:"pTubeless"};
+function profFromForm(){
+  const pr = getProfile();
+  pr.weight = +document.getElementById("pWeight").value || PROF_DEF.weight;
+  pr.height = +document.getElementById("pHeight").value || PROF_DEF.height;
+  pr.bike = +document.getElementById("pBike").value || PROF_DEF.bike;
+  pr.tire = +document.getElementById("pTire").value || PROF_DEF.tire;
+  pr.wheel = document.getElementById("pWheel").value;
+  pr.tubeless = document.getElementById("pTubeless").checked;
+  return pr;
+}
+function openProfile(){
+  const pr = getProfile();
+  for (const [k, id] of Object.entries(PROF_IDS)){
+    const el = document.getElementById(id);
+    if (k === "tubeless") el.checked = !!pr[k];
+    else el.value = pr[k];
+  }
+  renderPsi(pr);
+  document.getElementById("profOverlay").classList.add("open");
+}
+document.getElementById("btnProfile").addEventListener("click", openProfile);
+for (const id of Object.values(PROF_IDS))
+  document.getElementById(id).addEventListener("input", ()=>renderPsi(profFromForm()));
+document.getElementById("btnProfSave").addEventListener("click", ()=>{
+  saveProfile(profFromForm());
+  document.getElementById("profOverlay").classList.remove("open");
+  if (DATA){
+    if (DATA.est) estimatePower(DATA.pts);
+    renderReport(DATA.pts, DATA.name, DATA.est);
+  }
+});
+document.getElementById("btnProfClose").addEventListener("click", ()=>document.getElementById("profOverlay").classList.remove("open"));
 
 document.getElementById("btnPro").addEventListener("click", openLic);
 document.getElementById("btnLib").addEventListener("click", showLibrary);
