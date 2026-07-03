@@ -1,0 +1,1526 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RideLens — 라이딩 분석기</title>
+</head>
+<body>
+<style>
+  :root{
+    --page:#0d0f13; --surface:#14161b; --surface2:#1b1f27; --chip:#20252f;
+    --ink:#eef1f6; --ink2:#a7adba; --muted:#7a8090; --grid:#262c37;
+    --hairline:rgba(255,255,255,.09);
+    --c-speed:#3987e5; --c-hr:#e66767; --c-pwr:#9085e9; --c-cad:#199e70;
+    --c-elev:#8b94a7; --accent:#f0a63a;
+    --good:#0ca30c; --critical:#d03b3b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--page); color:var(--ink);
+    font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px 64px}
+
+  header.topbar{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:18px 0 14px;border-bottom:1px solid var(--hairline);margin-bottom:22px;
+  }
+  .logo{display:flex;align-items:baseline;gap:10px}
+  .logo b{font-size:19px;letter-spacing:-.02em}
+  .logo b em{font-style:normal;color:var(--accent)}
+  .logo span{font-size:12px;color:var(--muted)}
+  .topbar .grow{flex:1}
+  .ftp{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+  .ftp input{
+    width:64px;background:var(--surface2);border:1px solid var(--hairline);
+    color:var(--ink);border-radius:6px;padding:6px 8px;font:inherit;
+    font-variant-numeric:tabular-nums;text-align:right;
+  }
+  .ftp input:focus{outline:2px solid var(--c-speed);outline-offset:1px}
+  .btn{
+    background:var(--surface2);border:1px solid var(--hairline);color:var(--ink);
+    border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;
+  }
+  .btn:hover{background:var(--chip)}
+  .btn:focus-visible{outline:2px solid var(--c-speed);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:transparent;color:#1a1206}
+  .btn.primary:hover{background:#f7b95e}
+
+  /* drop zone */
+  #dropzone{
+    border:1.5px dashed #39404e;border-radius:14px;background:var(--surface);
+    padding:64px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  #dropzone.drag{border-color:var(--accent);background:var(--surface2)}
+  #dropzone h2{margin:0 0 6px;font-size:18px;letter-spacing:-.01em}
+  #dropzone p{margin:0;color:var(--muted);font-size:13px}
+  #dropzone .privacy{
+    display:inline-flex;align-items:center;gap:7px;margin-top:18px;
+    font-size:12px;color:var(--ink2);background:var(--surface2);
+    border:1px solid var(--hairline);border-radius:999px;padding:6px 14px;
+  }
+  #dropzone .privacy i{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+  .dz-actions{margin-top:22px;display:flex;gap:10px;justify-content:center}
+  #err{display:none;margin:14px 0 0;color:#f0918f;font-size:13px;text-align:center}
+
+  /* report */
+  #report{display:none}
+  .ride-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:4px 0 16px}
+  .ride-title h2{margin:0;font-size:17px;letter-spacing:-.01em}
+  .ride-title span{color:var(--muted);font-size:12.5px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px}
+  .tile{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px 11px}
+  .tile .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .tile .val{font-size:24px;font-weight:650;letter-spacing:-.02em;margin-top:2px}
+  .tile .val small{font-size:12px;font-weight:500;color:var(--ink2);margin-left:2px}
+  .tile .sub{font-size:11.5px;color:var(--ink2);margin-top:1px;font-variant-numeric:tabular-nums}
+
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:14px 16px 10px;margin-bottom:14px}
+  .card h3{margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);display:flex;align-items:center;gap:8px}
+  .card h3 i{width:10px;height:3px;border-radius:2px;flex:none}
+  .chart-wrap{position:relative}
+  .chart-wrap svg{display:block;width:100%}
+  .tip{
+    position:absolute;pointer-events:none;display:none;z-index:3;
+    background:var(--chip);border:1px solid rgba(255,255,255,.14);border-radius:7px;
+    padding:5px 9px;font-size:12px;white-space:nowrap;color:var(--ink);
+    font-variant-numeric:tabular-nums;box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  .tip b{font-weight:650}
+  .tip .d{color:var(--muted)}
+
+  .duo{display:grid;grid-template-columns:5fr 7fr;gap:14px}
+  @media(max-width:760px){.duo{grid-template-columns:1fr}}
+  #map{width:100%;height:280px;display:block}
+  .map-legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);padding:6px 2px 4px}
+  .map-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+  .splits{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:right;padding:7px 10px;border-bottom:1px solid var(--grid)}
+  th:first-child{text-align:left}
+  td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;color:var(--ink2)}
+  td:first-child{text-align:left;color:var(--ink);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  .bar-td{position:relative}
+  .bar-td .bar{position:absolute;left:0;top:20%;height:60%;background:rgba(57,135,229,.22);border-radius:2px}
+
+  .pro{
+    margin-top:26px;background:linear-gradient(135deg,var(--surface2),var(--surface));
+    border:1px solid var(--hairline);border-radius:12px;padding:18px 20px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .pro .grow{flex:1;min-width:240px}
+  .pro b{color:var(--accent)}
+  .pro p{margin:3px 0 0;color:var(--ink2);font-size:13px}
+  footer.foot{margin-top:26px;color:var(--muted);font-size:12px;text-align:center}
+
+  .btn.sm{padding:6px 12px;font-size:12.5px}
+  .ride-title .grow{flex:1}
+  .ride-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .badge-pro{
+    font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#211502;background:var(--accent);
+    border-radius:5px;padding:3px 7px;align-self:center;
+  }
+  .lock{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--accent);border:1px solid rgba(240,166,58,.4);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink2);padding:2px 2px 8px}
+  .legend i{width:10px;height:3px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:2px}
+  .lib-actions{display:flex;gap:10px;padding:12px 0 6px;flex-wrap:wrap}
+  .empty{color:var(--muted);text-align:center;padding:36px 0;font-size:13.5px}
+  td .btn.sm{padding:4px 10px;font-size:12px}
+
+  .lib-bar{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 14px}
+  .lib-bar input[type=search]{
+    flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--hairline);
+    color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;
+  }
+  .lib-bar input[type=search]:focus{outline:2px solid var(--c-speed);outline-offset:1px}
+  .lib-bar select{background:var(--surface2);border:1px solid var(--hairline);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .gcard{background:var(--surface2);border:1px solid var(--hairline);border-radius:12px;overflow:hidden;transition:border-color .12s}
+  .gcard:hover{border-color:rgba(240,166,58,.5)}
+  .gcard .thumb{position:relative;display:block}
+  .gcard canvas{display:block;width:100%;height:118px}
+  .gcard .chk{position:absolute;top:8px;left:8px;width:16px;height:16px;accent-color:var(--accent)}
+  .gcard .gbody{padding:9px 12px 7px}
+  .gcard .gname{font-weight:650;font-size:13.5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gcard .gname:hover{color:var(--accent)}
+  .gcard .gmeta{font-size:11.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gcard .acts{display:flex;gap:6px;padding:0 10px 10px}
+  .gcard .acts .btn{flex:1;padding:5px 0;font-size:11.5px;text-align:center}
+  .gempty{grid-column:1/-1;color:var(--muted);text-align:center;padding:24px 0;font-size:13px}
+  .chart-wrap{touch-action:pan-y}
+  .lib-name{cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.2);text-underline-offset:3px}
+  .lib-name:hover{color:var(--accent)}
+
+  .overlay{position:fixed;inset:0;background:rgba(5,7,10,.74);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--surface2);border:1px solid rgba(255,255,255,.13);border-radius:14px;max-width:420px;width:100%;padding:22px 22px 20px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+  .modal h3{margin:0 0 6px;font-size:16px}
+  .modal p{margin:0 0 14px;color:var(--ink2);font-size:13px}
+  .modal input[type=text]{
+    width:100%;background:var(--surface);border:1px solid var(--hairline);color:var(--ink);
+    border-radius:8px;padding:10px 12px;font:inherit;font-variant-numeric:tabular-nums;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  .modal input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .modal .row{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .modal .row .grow{flex:1}
+  #licErr{display:none;color:#f0918f;font-size:12.5px;margin:9px 0 0}
+  .modal.share{max-width:380px;text-align:center}
+  #shareCanvas{width:100%;max-width:280px;height:auto;border-radius:10px;border:1px solid var(--hairline);margin:6px auto 4px;display:block}
+
+  .print-head{display:none}
+  @media print{
+    :root{
+      --page:#fff;--surface:#fff;--surface2:#fff;--chip:#fff;
+      --ink:#111417;--ink2:#3f4550;--muted:#767d8e;--grid:#e2e4e9;--hairline:rgba(0,0,0,.16);
+      --c-speed:#2a78d6;--c-hr:#e34948;--c-pwr:#4a3aa7;--c-cad:#1baf7a;--c-elev:#6b7383;--accent:#c9820f;
+    }
+    body{background:#fff}
+    header.topbar,#dropzone,#err,.pro,.ride-actions,#library,#compare,.tip,footer.foot,.overlay{display:none!important}
+    .print-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:16px;font-size:13px;color:#3f4550}
+    .print-head b{font-size:18px;color:#111}
+    .print-head b em{font-style:normal;color:#c9820f}
+    .card,.tile{break-inside:avoid}
+    .tile .val{color:#111}
+  }
+
+  @media(max-width:560px){
+    .wrap{padding:0 14px 48px}
+    .tile .val{font-size:20px}
+    .topbar{gap:10px}
+    #dropzone{padding:44px 16px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    #report.enter{animation:up .35s ease-out}
+    @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  }
+</style>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="logo"><b>Ride<em>Lens</em></b><span>업로드 없는 라이딩 분석</span></div>
+    <div class="grow"></div>
+    <span class="badge-pro" id="proBadge" hidden>PRO</span>
+    <label class="ftp">FTP <input id="ftp" type="number" min="50" max="600" step="5" value="220"> W</label>
+    <button class="btn" id="btnLib">보관함</button>
+    <button class="btn" id="btnDemo">데모 라이딩 보기</button>
+    <button class="btn primary" id="btnOpen">파일 열기 (.fit / .gpx)</button>
+    <input id="file" type="file" accept=".fit,.gpx" multiple hidden>
+  </header>
+
+  <div id="dropzone" role="button" tabindex="0" aria-label="FIT 또는 GPX 파일 열기">
+    <h2>FIT / GPX 파일을 여기에 끌어다 놓으세요</h2>
+    <p>Garmin·Wahoo·Strava에서 내보낸 라이딩 파일을 즉시 분석합니다.<br>여러 개를 한꺼번에 놓으면 보관함 갤러리로 가져옵니다.</p>
+    <div class="dz-actions">
+      <button class="btn primary" id="btnOpen2">파일 선택</button>
+      <button class="btn" id="btnDemo2">데모 라이딩 보기</button>
+    </div>
+    <div class="privacy"><i></i>파일은 브라우저 밖으로 전송되지 않습니다 — 100% 로컬 분석</div>
+  </div>
+  <p id="err"></p>
+
+  <section id="report" aria-live="polite">
+    <div class="print-head"><b>Ride<em>Lens</em> 라이딩 리포트</b><span id="printMeta"></span></div>
+    <div class="ride-title"><h2 id="rideName">라이딩</h2><span id="rideMeta"></span>
+      <div class="grow"></div>
+      <div class="ride-actions">
+        <button class="btn sm" id="btnSave">보관함에 저장</button>
+        <button class="btn sm" id="btnShare">공유</button>
+        <button class="btn sm" id="btnPdf">PDF 리포트<span class="lock">PRO</span></button>
+      </div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <div id="charts"></div>
+    <div class="duo">
+      <div class="card"><h3><i style="background:var(--c-speed)"></i>경로</h3>
+        <canvas id="map" height="280"></canvas>
+        <div class="map-legend"><span><i style="background:var(--good)"></i>출발</span><span><i style="background:var(--critical)"></i>도착</span></div>
+      </div>
+      <div class="card"><h3><i style="background:var(--c-elev)"></i>5 km 구간 기록</h3>
+        <div class="splits"><table id="splitTable"></table></div>
+      </div>
+    </div>
+    <div class="pro">
+      <div class="grow"><b>RideLens Pro</b>
+        <p>PDF 라이딩 리포트 · 여러 라이딩 비교 · 훈련 부하(CTL/ATL) 추적 — ₩29,000 평생 라이선스</p>
+      </div>
+      <button class="btn primary" id="btnPro">Pro 알아보기</button>
+    </div>
+    <footer class="foot">RideLens — 모든 분석은 이 기기 안에서 끝납니다. 서버도, 계정도 없습니다.</footer>
+  </section>
+
+  <section id="library" style="display:none">
+    <div class="ride-title"><h2>보관함</h2><span id="libCount"></span>
+      <div class="grow"></div>
+      <div class="ride-actions">
+        <button class="btn sm" id="btnExport">백업 내보내기</button>
+        <button class="btn sm" id="btnImport">백업 가져오기</button>
+        <input id="importFile" type="file" accept=".json" hidden>
+      </div>
+    </div>
+    <div class="card" id="loadCard" style="display:none">
+      <h3><i style="background:var(--c-speed)"></i>훈련 부하</h3>
+      <div class="legend"><span><i style="background:var(--c-speed)"></i>CTL (체력)</span><span><i style="background:var(--c-pwr)"></i>ATL (피로)</span><span><i style="background:#3a4152"></i>일일 TSS</span></div>
+      <div class="chart-wrap" id="loadChart"><div class="tip"></div></div>
+    </div>
+    <div class="card" id="libListCard" style="display:none">
+      <h3><i style="background:var(--c-elev)"></i>라이딩 갤러리</h3>
+      <div class="lib-bar">
+        <input type="search" id="libSearch" placeholder="이름으로 검색">
+        <select id="libSort" aria-label="정렬 기준">
+          <option value="date">최신순</option>
+          <option value="dist">거리순</option>
+          <option value="gain">획득고도순</option>
+          <option value="tss">TSS순</option>
+        </select>
+      </div>
+      <div class="gallery" id="gallery"></div>
+      <div class="lib-actions">
+        <button class="btn primary" id="btnCompare">선택한 라이딩 비교<span class="lock" style="border-color:rgba(33,21,2,.35);color:#211502">PRO</span></button>
+      </div>
+    </div>
+    <p class="empty" id="libEmpty">아직 저장된 라이딩이 없습니다.<br>라이딩을 분석한 뒤 "보관함에 저장"을 누르면 이곳에 쌓입니다 — 물론 이 기기 안에만.</p>
+  </section>
+
+  <section id="compare" style="display:none">
+    <div class="ride-title"><h2>라이딩 비교</h2>
+      <div class="grow"></div>
+      <button class="btn sm" id="btnBackLib">← 보관함으로</button>
+    </div>
+    <div class="card"><h3><i style="background:var(--c-elev)"></i>요약 비교</h3>
+      <div class="splits"><table id="cmpTable"></table></div>
+    </div>
+    <div id="cmpCharts"></div>
+  </section>
+</div>
+
+<div class="overlay" id="licOverlay" role="dialog" aria-modal="true" aria-label="RideLens Pro 활성화">
+  <div class="modal">
+    <h3>RideLens Pro 활성화</h3>
+    <p>PDF 리포트 · 라이딩 비교 · 훈련 부하 추적이 잠금 해제됩니다.<br>키 검증도 오프라인에서 이뤄집니다.</p>
+    <input type="text" id="licKey" placeholder="RLPRO-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false">
+    <p id="licErr">키가 올바르지 않습니다. 구매 메일에 있는 키를 다시 확인해 주세요.</p>
+    <div class="row">
+      <button class="btn primary" id="btnActivate">활성화</button>
+      <a class="btn" href="mailto:hongsgo@gmail.com?subject=RideLens%20Pro%20%EA%B5%AC%EB%A7%A4">₩29,000 구매하기</a>
+      <div class="grow"></div>
+      <button class="btn" id="btnLicClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="shareOverlay" role="dialog" aria-modal="true" aria-label="라이딩 공유">
+  <div class="modal share">
+    <h3>라이딩 공유</h3>
+    <canvas id="shareCanvas" width="1080" height="1350"></canvas>
+    <p style="margin:8px 0 0">인스타그램 · 카카오톡 · 메시지 어디로든.<br>이미지는 기기에서 만들어져 바로 공유됩니다.</p>
+    <div class="row">
+      <button class="btn primary" id="btnShareGo">공유하기</button>
+      <button class="btn" id="btnShareDl">이미지 저장</button>
+      <div class="grow"></div>
+      <button class="btn" id="btnShareClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------------- FIT parser ---------------- */
+const FIT_EPOCH = 631065600; // 1989-12-31 UTC → unix
+const SEMI = 180 / Math.pow(2, 31);
+
+function parseFit(buf){
+  const dv = new DataView(buf);
+  if (buf.byteLength < 14) throw new Error("파일이 너무 작습니다");
+  const headerSize = dv.getUint8(0);
+  const dataSize = dv.getUint32(4, true);
+  const sig = String.fromCharCode(dv.getUint8(8),dv.getUint8(9),dv.getUint8(10),dv.getUint8(11));
+  if (sig !== ".FIT") throw new Error("FIT 시그니처가 없습니다");
+  let pos = headerSize;
+  const end = Math.min(headerSize + dataSize, buf.byteLength);
+  const defs = {};
+  const points = [];
+  let lastTs = null;
+
+  function readVal(p, base, size, le){
+    const bt = base & 0x1f;
+    try{
+      switch(bt){
+        case 0: case 2: case 10: case 13: { if(size!==1) return null; const v=dv.getUint8(p); return (v===0xff && bt!==13)?null:v; }
+        case 1: { if(size!==1) return null; const v=dv.getInt8(p); return v===0x7f?null:v; }
+        case 3: { if(size!==2) return null; const v=dv.getInt16(p,le); return v===0x7fff?null:v; }
+        case 4: case 11: { if(size!==2) return null; const v=dv.getUint16(p,le); return v===0xffff?null:v; }
+        case 5: { if(size!==4) return null; const v=dv.getInt32(p,le); return v===0x7fffffff?null:v; }
+        case 6: case 12: { if(size!==4) return null; const v=dv.getUint32(p,le); return v===0xffffffff?null:v; }
+        case 8: { if(size!==4) return null; return dv.getFloat32(p,le); }
+        case 9: { if(size!==8) return null; return dv.getFloat64(p,le); }
+        default: return null;
+      }
+    }catch(e){ return null; }
+  }
+
+  function readDataMsg(def){
+    const f = {};
+    for (const fd of def.fields){
+      const v = readVal(pos, fd.base, fd.size, def.le);
+      if (v !== null) f[fd.num] = v;
+      pos += fd.size;
+    }
+    pos += def.devBytes;
+    if (def.globalNum === 20){
+      const ts = f[253] !== undefined ? f[253] + FIT_EPOCH : lastTs;
+      if (f[253] !== undefined) lastTs = ts;
+      const spd = f[73] !== undefined ? f[73]/1000 : (f[6] !== undefined ? f[6]/1000 : null);
+      const alt = f[78] !== undefined ? f[78]/5-500 : (f[2] !== undefined ? f[2]/5-500 : null);
+      points.push({
+        t: ts,
+        lat: f[0] !== undefined ? f[0]*SEMI : null,
+        lon: f[1] !== undefined ? f[1]*SEMI : null,
+        ele: alt,
+        dist: f[5] !== undefined ? f[5]/100 : null,
+        spd: spd,
+        hr: f[3] !== undefined ? f[3] : null,
+        cad: f[4] !== undefined ? f[4] : null,
+        pwr: f[7] !== undefined ? f[7] : null
+      });
+    }
+  }
+
+  while (pos < end){
+    const hdr = dv.getUint8(pos++);
+    if (hdr & 0x80){ // compressed timestamp data message
+      const local = (hdr >> 5) & 0x3;
+      const def = defs[local];
+      if (!def) break;
+      readDataMsg(def);
+    } else if (hdr & 0x40){ // definition
+      const local = hdr & 0xf;
+      const hasDev = !!(hdr & 0x20);
+      pos++; // reserved
+      const le = dv.getUint8(pos++) === 0;
+      const globalNum = le ? dv.getUint16(pos,true) : dv.getUint16(pos,false); pos += 2;
+      const nf = dv.getUint8(pos++);
+      const fields = [];
+      for (let i=0;i<nf;i++){ fields.push({num:dv.getUint8(pos), size:dv.getUint8(pos+1), base:dv.getUint8(pos+2)}); pos += 3; }
+      let devBytes = 0;
+      if (hasDev){ const nd = dv.getUint8(pos++); for (let i=0;i<nd;i++){ devBytes += dv.getUint8(pos+1); pos += 3; } }
+      defs[local] = {le, globalNum, fields, devBytes};
+    } else { // normal data message
+      const def = defs[hdr & 0xf];
+      if (!def) break;
+      readDataMsg(def);
+    }
+  }
+  if (!points.length) throw new Error("record 메시지를 찾지 못했습니다");
+  return points;
+}
+
+/* ---------------- GPX parser ---------------- */
+function parseGpx(text){
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("GPX XML 파싱 실패");
+  const trkpts = doc.getElementsByTagName("trkpt");
+  if (!trkpts.length) throw new Error("트랙 포인트가 없습니다");
+  const points = [];
+  for (const el of trkpts){
+    const p = {t:null, lat:+el.getAttribute("lat"), lon:+el.getAttribute("lon"),
+               ele:null, dist:null, spd:null, hr:null, cad:null, pwr:null};
+    for (const ch of el.getElementsByTagName("*")){
+      const n = ch.localName.toLowerCase();
+      const v = ch.textContent.trim();
+      if (n === "ele") p.ele = parseFloat(v);
+      else if (n === "time") p.t = Date.parse(v)/1000;
+      else if (n === "hr") p.hr = parseInt(v,10);
+      else if (n === "cad") p.cad = parseInt(v,10);
+      else if (n === "power" || n === "watts" || n === "powerinwatts") p.pwr = parseFloat(v);
+      else if (n === "atemp") {}
+    }
+    points.push(p);
+  }
+  return points;
+}
+
+/* ---------------- geometry & stats ---------------- */
+function haversine(a, b){
+  const R = 6371000, r = Math.PI/180;
+  const dLat = (b.lat-a.lat)*r, dLon = (b.lon-a.lon)*r;
+  const s = Math.sin(dLat/2)**2 + Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function smooth(arr, w){
+  const out = new Array(arr.length), half = Math.floor(w/2);
+  for (let i=0;i<arr.length;i++){
+    let s=0, n=0;
+    for (let j=Math.max(0,i-half); j<=Math.min(arr.length-1,i+half); j++){
+      if (arr[j] != null){ s += arr[j]; n++; }
+    }
+    out[i] = n ? s/n : null;
+  }
+  return out;
+}
+
+function prepare(points){
+  // fill cumulative distance
+  let d = 0, prev = null;
+  for (const p of points){
+    if (p.dist == null){
+      if (prev && p.lat != null && prev.lat != null) d += haversine(prev, p);
+      p.dist = d;
+    } else d = p.dist;
+    prev = (p.lat != null) ? p : prev;
+  }
+  // fill speed from distance/time
+  for (let i=0;i<points.length;i++){
+    if (points[i].spd == null && i>0 && points[i].t != null && points[i-1].t != null){
+      const dt = points[i].t - points[i-1].t;
+      if (dt > 0) points[i].spd = (points[i].dist - points[i-1].dist)/dt;
+    }
+  }
+  const spdArr = smooth(points.map(p=>p.spd), 5);
+  points.forEach((p,i)=>{ if (spdArr[i] != null) p.spd = Math.max(0, spdArr[i]); });
+  const eleArr = smooth(points.map(p=>p.ele), 9);
+  points.forEach((p,i)=>{ p.eleS = eleArr[i]; });
+  return points;
+}
+
+function computeStats(pts, ftp){
+  const s = {};
+  s.distance = pts[pts.length-1].dist;
+  s.startTime = pts[0].t; s.endTime = pts[pts.length-1].t;
+  s.elapsed = (s.endTime != null && s.startTime != null) ? s.endTime - s.startTime : null;
+  let moving = 0, gain = 0, kj = 0;
+  let hrS=0, hrN=0, hrMax=0, pwS=0, pwN=0, pwMax=0, cadS=0, cadN=0, spMax=0;
+  let prevEle = null;
+  const rolled = []; // 30s rolling power for NP
+  let win = [], winSum = 0;
+  for (let i=1;i<pts.length;i++){
+    const p = pts[i], q = pts[i-1];
+    const dt = (p.t != null && q.t != null) ? Math.min(p.t - q.t, 30) : 1;
+    if (p.spd != null && p.spd > 0.9) moving += dt;
+    if (p.eleS != null){
+      if (prevEle != null && p.eleS > prevEle) gain += p.eleS - prevEle;
+      prevEle = p.eleS;
+    }
+    if (p.spd != null && p.spd > spMax) spMax = p.spd;
+    if (p.hr != null){ hrS += p.hr*dt; hrN += dt; if (p.hr > hrMax) hrMax = p.hr; }
+    if (p.cad != null && p.cad > 0){ cadS += p.cad*dt; cadN += dt; }
+    if (p.pwr != null){
+      pwS += p.pwr*dt; pwN += dt; if (p.pwr > pwMax) pwMax = p.pwr;
+      kj += p.pwr*dt/1000;
+      win.push({t:p.t, v:p.pwr}); winSum += p.pwr;
+      while (win.length && p.t - win[0].t > 30){ winSum -= win[0].v; win.shift(); }
+      if (win.length >= 5) rolled.push(winSum/win.length);
+    }
+  }
+  s.moving = moving; s.gain = gain; s.kj = kj;
+  s.avgSpd = moving > 0 ? s.distance/moving : null; s.maxSpd = spMax;
+  s.avgHr = hrN ? hrS/hrN : null; s.maxHr = hrMax || null;
+  s.avgPwr = pwN ? pwS/pwN : null; s.maxPwr = pwMax || null;
+  s.avgCad = cadN ? cadS/cadN : null;
+  if (rolled.length){
+    const m4 = rolled.reduce((a,v)=>a+v**4,0)/rolled.length;
+    s.np = Math.pow(m4, .25);
+    s.if = s.np/ftp;
+    s.tss = (moving * s.np * s.if) / (ftp*3600) * 100;
+  }
+  return s;
+}
+
+function computeSplits(pts, kmStep){
+  const splits = [];
+  let i0 = 0, next = kmStep*1000;
+  for (let i=1;i<pts.length;i++){
+    if (pts[i].dist >= next || i === pts.length-1){
+      const seg = pts.slice(i0, i+1);
+      let time=0,hs=0,hn=0,ps=0,pn=0,g=0,pe=null;
+      for (let j=1;j<seg.length;j++){
+        const dt = (seg[j].t!=null&&seg[j-1].t!=null)?Math.min(seg[j].t-seg[j-1].t,30):1;
+        if (seg[j].spd != null && seg[j].spd > 0.9) time += dt;
+        if (seg[j].hr != null){hs+=seg[j].hr*dt;hn+=dt;}
+        if (seg[j].pwr != null){ps+=seg[j].pwr*dt;pn+=dt;}
+        if (seg[j].eleS != null){ if(pe!=null&&seg[j].eleS>pe) g+=seg[j].eleS-pe; pe=seg[j].eleS; }
+      }
+      const distKm = (seg[seg.length-1].dist - seg[0].dist)/1000;
+      if (distKm > 0.2)
+        splits.push({ km: next/1000, distKm, time,
+          spd: time>0 ? distKm*1000/time*3.6 : null,
+          hr: hn?hs/hn:null, pwr: pn?ps/pn:null, gain: g });
+      i0 = i; next += kmStep*1000;
+    }
+  }
+  return splits;
+}
+
+/* ---------------- formatting ---------------- */
+const fmt = {
+  km: v => (v/1000).toFixed(1),
+  dur: v => { if(v==null)return "–"; v=Math.round(v); const h=Math.floor(v/3600),m=Math.floor(v%3600/60),s=v%60;
+    return h ? `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}` : `${m}:${String(s).padStart(2,"0")}`; },
+  n0: v => v==null ? "–" : Math.round(v).toLocaleString(),
+  n1: v => v==null ? "–" : (Math.round(v*10)/10).toFixed(1),
+  kmh: v => v==null ? "–" : (v*3.6).toFixed(1)
+};
+
+/* ---------------- charts ---------------- */
+let charts = []; // {cfg, geo}
+let DATA = null;
+
+function downsample(pts, get, n){
+  const out = [];
+  const step = Math.max(1, Math.floor(pts.length/n));
+  for (let i=0;i<pts.length;i+=step){
+    let s=0,c=0,d=0;
+    for (let j=i;j<Math.min(i+step,pts.length);j++){
+      const v = get(pts[j]);
+      if (v != null){ s+=v; c++; }
+      d = pts[j].dist;
+    }
+    if (c) out.push({x:d/1000, y:s/c, i:Math.min(i+step-1,pts.length-1)});
+  }
+  return out;
+}
+
+function niceTicks(min, max, n){
+  const span = max-min || 1;
+  const step0 = span/n;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  let step = mag;
+  for (const m of [1,2,2.5,5,10]) if (step0 <= m*mag){ step = m*mag; break; }
+  const ticks = [];
+  for (let v = Math.ceil(min/step)*step; v <= max+1e-9; v += step) ticks.push(v);
+  return ticks;
+}
+
+function buildChart(container, cfg){
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<h3><i style="background:${cfg.color}"></i>${cfg.title}</h3>
+    <div class="chart-wrap"><div class="tip"></div></div>`;
+  container.appendChild(card);
+  const wrap = card.querySelector(".chart-wrap");
+  const H = 190, padL = 46, padR = 12, padT = 10, padB = 24;
+
+  function render(){
+    const W = Math.max(320, wrap.clientWidth);
+    const data = cfg.data;
+    if (!data.length) return;
+    const xMax = data[data.length-1].x;
+    let yMin = Math.min(...data.map(d=>d.y)), yMax = Math.max(...data.map(d=>d.y));
+    if (cfg.zeroBase) yMin = 0;
+    if (yMax - yMin < 1e-6) yMax = yMin+1;
+    const pad = (yMax-yMin)*0.08; yMax += pad; if(!cfg.zeroBase) yMin -= pad;
+    const sx = x => padL + x/xMax*(W-padL-padR);
+    const sy = y => padT + (1-(y-yMin)/(yMax-yMin))*(H-padT-padB);
+    let grid = "", labels = "";
+    for (const t of niceTicks(yMin,yMax,4)){
+      const y = sy(t);
+      grid += `<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+      labels += `<text x="${padL-8}" y="${y+3.5}" text-anchor="end" fill="var(--muted)" font-size="10.5" style="font-variant-numeric:tabular-nums">${fmt.n0(t)}</text>`;
+    }
+    for (const t of niceTicks(0,xMax,6)){
+      const x = sx(t);
+      labels += `<text x="${x}" y="${H-7}" text-anchor="middle" fill="var(--muted)" font-size="10.5" style="font-variant-numeric:tabular-nums">${Math.round(t)}km</text>`;
+    }
+    let path = "";
+    data.forEach((d,i)=>{ path += (i?"L":"M") + sx(d.x).toFixed(1) + " " + sy(d.y).toFixed(1) + " "; });
+    let shape;
+    if (cfg.area){
+      shape = `<path d="${path}L${sx(xMax).toFixed(1)} ${sy(yMin).toFixed(1)} L${sx(data[0].x).toFixed(1)} ${sy(yMin).toFixed(1)} Z" fill="${cfg.color}" opacity=".18"/>
+               <path d="${path}" fill="none" stroke="${cfg.color}" stroke-width="1.6" stroke-linejoin="round"/>`;
+    } else {
+      shape = `<path d="${path}" fill="none" stroke="${cfg.color}" stroke-width="2" stroke-linejoin="round"/>`;
+    }
+    const old = wrap.querySelector("svg");
+    if (old) old.remove();
+    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    svg.setAttribute("role","img");
+    svg.setAttribute("aria-label", cfg.title + " 차트");
+    svg.innerHTML = grid + shape + labels +
+      `<line class="xh" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="rgba(255,255,255,.35)" stroke-width="1" visibility="hidden"/>
+       <circle class="dot" r="4" fill="${cfg.color}" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+    wrap.appendChild(svg);
+    ch.geo = {W,H,padL,padR,padT,padB,xMax,sx,sy};
+  }
+  const ch = {cfg, wrap, render};
+  const pointerSync = clientX => {
+    const r = wrap.getBoundingClientRect();
+    const g = ch.geo; if(!g) return;
+    const xKm = Math.max(0, Math.min(g.xMax, (clientX-r.left-g.padL)/(g.W-g.padL-g.padR)*g.xMax));
+    syncCrosshair(xKm);
+  };
+  wrap.addEventListener("mousemove", e=>pointerSync(e.clientX));
+  wrap.addEventListener("mouseleave", ()=> syncCrosshair(null));
+  ["touchstart","touchmove"].forEach(ev=>wrap.addEventListener(ev, e=>{ if(e.touches[0]) pointerSync(e.touches[0].clientX); }, {passive:true}));
+  charts.push(ch);
+  render();
+}
+
+function syncCrosshair(xKm){
+  for (const ch of charts){
+    const svg = ch.wrap.querySelector("svg"); if (!svg) continue;
+    const xh = svg.querySelector(".xh"), dot = svg.querySelector(".dot"), tip = ch.wrap.querySelector(".tip");
+    if (xKm == null){ xh.setAttribute("visibility","hidden"); dot.setAttribute("visibility","hidden"); tip.style.display="none"; continue; }
+    const g = ch.geo, data = ch.cfg.data;
+    // nearest point by x
+    let lo=0, hi=data.length-1;
+    while (hi-lo>1){ const m=(lo+hi)>>1; (data[m].x<xKm)?lo=m:hi=m; }
+    const d = (Math.abs(data[lo].x-xKm)<Math.abs(data[hi].x-xKm))?data[lo]:data[hi];
+    const px = g.sx(d.x), py = g.sy(d.y);
+    xh.setAttribute("x1",px); xh.setAttribute("x2",px); xh.setAttribute("visibility","visible");
+    dot.setAttribute("cx",px); dot.setAttribute("cy",py); dot.setAttribute("visibility","visible");
+    tip.style.display = "block";
+    tip.innerHTML = `<span class="d">${d.x.toFixed(1)} km</span> · <b>${ch.cfg.fmt(d.y)}</b>`;
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.min(Math.max(px - tw/2, 4), g.W - tw - 4) + "px";
+    tip.style.top = "2px";
+    if (typeof ch.cfg.onHover === "function") ch.cfg.onHover(d);
+  }
+  drawMapDot(xKm);
+}
+
+/* ---------------- map ---------------- */
+let mapGeo = null;
+function drawMap(pts){
+  const cv = document.getElementById("map");
+  const ratio = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = 280;
+  cv.width = w*ratio; cv.height = h*ratio;
+  const ctx = cv.getContext("2d");
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0,0,w,h);
+  const geo = pts.filter(p=>p.lat!=null&&p.lon!=null);
+  if (geo.length < 2){ mapGeo=null; ctx.fillStyle="#7a8090"; ctx.font="12px system-ui"; ctx.fillText("GPS 데이터 없음", 12, 24); return; }
+  const lat0 = geo[0].lat*Math.PI/180, k = Math.cos(lat0);
+  let xMin=1e9,xMax=-1e9,yMin=1e9,yMax=-1e9;
+  for (const p of geo){ const x=p.lon*k, y=p.lat;
+    if(x<xMin)xMin=x; if(x>xMax)xMax=x; if(y<yMin)yMin=y; if(y>yMax)yMax=y; }
+  const pad = 18;
+  const sc = Math.min((w-2*pad)/((xMax-xMin)||1e-9), (h-2*pad)/((yMax-yMin)||1e-9));
+  const ox = (w - (xMax-xMin)*sc)/2, oy = (h - (yMax-yMin)*sc)/2;
+  const px = p => [ox + (p.lon*k - xMin)*sc, h - (oy + (p.lat - yMin)*sc)];
+  ctx.beginPath();
+  geo.forEach((p,i)=>{ const [x,y]=px(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.strokeStyle = "#3987e5"; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.stroke();
+  const [sx0,sy0]=px(geo[0]), [ex,ey]=px(geo[geo.length-1]);
+  for (const [x,y,c] of [[sx0,sy0,"#0ca30c"],[ex,ey,"#d03b3b"]]){
+    ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fillStyle=c; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle="#14161b"; ctx.stroke();
+  }
+  mapGeo = {geo, px, base: ctx.getImageData(0,0,cv.width,cv.height)};
+}
+function drawMapDot(xKm){
+  if (!mapGeo) return;
+  const cv = document.getElementById("map");
+  const ctx = cv.getContext("2d");
+  ctx.putImageData(mapGeo.base, 0, 0);
+  if (xKm == null) return;
+  const g = mapGeo.geo;
+  let best = g[0], bd = 1e18;
+  for (const p of g){ const d = Math.abs(p.dist/1000 - xKm); if (d < bd){ bd = d; best = p; } }
+  const [x,y] = mapGeo.px(best);
+  const ratio = window.devicePixelRatio || 1;
+  ctx.save(); ctx.scale(1,1);
+  ctx.beginPath(); ctx.arc(x*ratio/ratio, y, 6, 0, 7);
+  ctx.fillStyle = "#f0a63a"; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = "#14161b"; ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------------- report ---------------- */
+function tile(lbl, val, unit, sub){
+  return `<div class="tile"><div class="lbl">${lbl}</div>
+    <div class="val">${val}${unit?`<small>${unit}</small>`:""}</div>
+    ${sub?`<div class="sub">${sub}</div>`:""}</div>`;
+}
+
+function renderReport(pts, name){
+  DATA = {pts, name};
+  const ftp = +document.getElementById("ftp").value || 220;
+  const s = computeStats(pts, ftp);
+  showView("report");
+  document.getElementById("report").classList.add("enter");
+  document.getElementById("rideName").textContent = name;
+  document.getElementById("printMeta").textContent = name + " · " + new Date().toLocaleDateString("ko-KR");
+  const dt = s.startTime ? new Date(s.startTime*1000) : null;
+  document.getElementById("rideMeta").textContent =
+    (dt ? dt.toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"short"}) + " · " : "") +
+    `총 시간 ${fmt.dur(s.elapsed)}`;
+
+  let tiles = "";
+  tiles += tile("거리", fmt.km(s.distance), "km");
+  tiles += tile("이동 시간", fmt.dur(s.moving), "");
+  tiles += tile("획득 고도", fmt.n0(s.gain), "m");
+  tiles += tile("평균 속도", s.avgSpd!=null?(s.avgSpd*3.6).toFixed(1):"–", "km/h", "최고 " + fmt.kmh(s.maxSpd));
+  if (s.avgPwr != null){
+    tiles += tile("평균 파워", fmt.n0(s.avgPwr), "W", "최대 " + fmt.n0(s.maxPwr) + " W · " + fmt.n0(s.kj) + " kJ");
+    if (s.np != null) tiles += tile("NP", fmt.n0(s.np), "W", "IF " + s.if.toFixed(2));
+    if (s.tss != null) tiles += tile("TSS", fmt.n0(s.tss), "", `FTP ${ftp} W 기준`);
+  }
+  if (s.avgHr != null) tiles += tile("평균 심박", fmt.n0(s.avgHr), "bpm", "최대 " + fmt.n0(s.maxHr));
+  if (s.avgCad != null) tiles += tile("평균 케이던스", fmt.n0(s.avgCad), "rpm");
+  document.getElementById("tiles").innerHTML = tiles;
+
+  // charts
+  charts = [];
+  const box = document.getElementById("charts");
+  box.innerHTML = "";
+  const has = k => pts.some(p=>p[k] != null);
+  if (has("eleS")) buildChart(box, {title:"고도", color:"var(--c-elev)", area:true, zeroBase:false,
+    data: downsample(pts, p=>p.eleS, 700), fmt: v=>fmt.n0(v)+" m"});
+  if (has("spd")) buildChart(box, {title:"속도", color:"var(--c-speed)", zeroBase:true,
+    data: downsample(pts, p=>p.spd==null?null:p.spd*3.6, 700), fmt: v=>fmt.n1(v)+" km/h"});
+  if (has("pwr")) buildChart(box, {title:"파워", color:"var(--c-pwr)", zeroBase:true,
+    data: downsample(pts, p=>p.pwr, 700), fmt: v=>fmt.n0(v)+" W"});
+  if (has("hr")) buildChart(box, {title:"심박", color:"var(--c-hr)", zeroBase:false,
+    data: downsample(pts, p=>p.hr, 700), fmt: v=>fmt.n0(v)+" bpm"});
+
+  // splits
+  const splits = computeSplits(pts, 5);
+  const hasPwr = splits.some(x=>x.pwr!=null), hasHr = splits.some(x=>x.hr!=null);
+  let thead = `<tr><th>구간</th><th>시간</th><th>속도</th>${hasHr?"<th>심박</th>":""}${hasPwr?"<th>파워</th>":""}<th>상승</th></tr>`;
+  const maxSpd = Math.max(...splits.map(x=>x.spd||0), 1);
+  let rows = splits.map((x,i)=>{
+    const from = i===0?0:splits[i-1].km;
+    return `<tr><td>${from}–${Math.round((from+x.distKm)*10)/10} km</td>
+      <td>${fmt.dur(x.time)}</td>
+      <td class="bar-td"><span class="bar" style="width:${(x.spd/maxSpd*100).toFixed(0)}%"></span>${fmt.n1(x.spd)}</td>
+      ${hasHr?`<td>${fmt.n0(x.hr)}</td>`:""}
+      ${hasPwr?`<td>${fmt.n0(x.pwr)}</td>`:""}
+      <td>${fmt.n0(x.gain)} m</td></tr>`;
+  }).join("");
+  document.getElementById("splitTable").innerHTML = thead + rows;
+
+  drawMap(pts);
+}
+
+/* ---------------- demo ride generator ---------------- */
+function demoRide(){
+  const pts = [];
+  const segs = [ // [끝 km, 목표속도 km/h, 경사 %]
+    [12, 30, 0.3],[18, 13.5, 6.4],[26, 42, -4.7],[40, 26, 0],[52, 32, 0.2],[57, 19, 3.2],[62, 36, -3.2]
+  ];
+  let t = Math.floor(Date.parse("2026-06-28T07:12:00+09:00")/1000);
+  let dist = 0, ele = 86, v = 0, hr = 88, lat0 = 37.5251, lon0 = 126.9958;
+  const total = 62000;
+  let seed = 42;
+  const rnd = () => { seed = (seed*1103515245+12345) & 0x7fffffff; return seed/0x7fffffff - .5; };
+  let pSm = 0;
+  while (dist < total){
+    const km = dist/1000;
+    let sg = segs[segs.length-1];
+    for (const s of segs){ if (km < s[0]){ sg = s; break; } }
+    const roll = (km>26 && km<40) ? Math.sin(km*1.3)*2.2 : 0;
+    const grade = (sg[2] + roll)/100 + rnd()*0.004;
+    const vT = Math.max(2.2, sg[1]/3.6 * (1 + rnd()*0.14) - roll*0.35);
+    v += (vT - v)*0.12;
+    dist += v; t += 1;
+    ele += grade*v;
+    // physics-ish power
+    const m=75,g=9.81,crr=0.005,cda=0.32,rho=1.2;
+    let p = m*g*v*(crr+grade) + 0.5*cda*rho*v**3;
+    p = Math.max(0, p*(1+rnd()*0.22));
+    if (grade < -0.02) p = (rnd()>0.15) ? 0 : p*0.4;
+    pSm += (p-pSm)*0.05;
+    hr += (Math.min(181, 92 + pSm*0.42) - hr)/45 + rnd()*0.8;
+    const f = dist/total*2*Math.PI;
+    const lat = lat0 + 0.058*Math.sin(f) + 0.011*Math.sin(3*f);
+    const lon = lon0 + 0.075*(1-Math.cos(f))*0.6 + 0.013*Math.sin(2*f);
+    let cad = grade > 0.03 ? 71 : 87;
+    if (p < 5) cad = 0; else cad += Math.round(rnd()*8);
+    pts.push({t, lat, lon, ele, dist, spd:v, hr:Math.round(hr), cad, pwr:Math.round(p)});
+  }
+  return pts;
+}
+
+/* ---------------- views ---------------- */
+function showView(v){
+  document.getElementById("dropzone").style.display = v==="home" ? "" : "none";
+  document.getElementById("report").style.display  = v==="report" ? "block" : "none";
+  document.getElementById("library").style.display = v==="library" ? "block" : "none";
+  document.getElementById("compare").style.display = v==="compare" ? "block" : "none";
+}
+
+/* ---------------- license (offline) ---------------- */
+const LIC_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function keyValid(k){
+  const m = (k||"").trim().toUpperCase().match(/^RLPRO-([A-Z2-9]{5})-([A-Z2-9]{5})-([A-Z2-9]{5})$/);
+  if (!m) return false;
+  const s = m[1]+m[2]+m[3];
+  let sum = 7;
+  for (const ch of s.slice(0,14)) sum = (sum*31 + LIC_ALPHA.indexOf(ch) + 1) % 1024;
+  return LIC_ALPHA[sum % 32] === s[14];
+}
+function isPro(){ try{ return keyValid(localStorage.getItem("ridelens_license")); }catch(e){ return false; } }
+function applyProUi(){
+  const pro = isPro();
+  document.getElementById("proBadge").hidden = !pro;
+  document.querySelector(".pro").style.display = pro ? "none" : "";
+  document.querySelectorAll(".ride-actions .lock, .lib-actions .lock").forEach(el=>{ el.style.display = pro ? "none" : ""; });
+}
+function openLic(){ document.getElementById("licOverlay").classList.add("open"); document.getElementById("licKey").focus(); }
+function closeLic(){ document.getElementById("licOverlay").classList.remove("open"); document.getElementById("licErr").style.display="none"; }
+
+/* ---------------- storage (IndexedDB) ---------------- */
+function openDb(){
+  return new Promise((res, rej)=>{
+    const rq = indexedDB.open("ridelens", 1);
+    rq.onupgradeneeded = ()=> rq.result.createObjectStore("rides", {keyPath:"id"});
+    rq.onsuccess = ()=> res(rq.result);
+    rq.onerror = ()=> rej(rq.error);
+  });
+}
+async function dbAll(){
+  const db = await openDb();
+  return new Promise((res, rej)=>{
+    const rq = db.transaction("rides").objectStore("rides").getAll();
+    rq.onsuccess = ()=> res(rq.result || []); rq.onerror = ()=> rej(rq.error);
+  });
+}
+async function dbPut(r){
+  const db = await openDb();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction("rides","readwrite");
+    tx.objectStore("rides").put(r);
+    tx.oncomplete = res; tx.onerror = ()=> rej(tx.error);
+  });
+}
+async function dbDel(id){
+  const db = await openDb();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction("rides","readwrite");
+    tx.objectStore("rides").delete(id);
+    tx.oncomplete = res; tx.onerror = ()=> rej(tx.error);
+  });
+}
+
+function packPoints(pts){
+  const step = Math.max(1, Math.ceil(pts.length/1500));
+  const out = [];
+  for (let i=0;i<pts.length;i+=step){
+    const p = pts[i];
+    out.push({t:p.t, lat:p.lat, lon:p.lon, dist:p.dist, spd:p.spd, hr:p.hr, cad:p.cad, pwr:p.pwr, ele:p.eleS, eleS:p.eleS});
+  }
+  return out;
+}
+
+function makeRecord(pts, name, id){
+  const ftp = +document.getElementById("ftp").value || 220;
+  const s = computeStats(pts, ftp);
+  return { id: id || Date.now(), name,
+    date: s.startTime ? s.startTime*1000 : Date.now(),
+    ftp, stats: s, points: packPoints(pts) };
+}
+
+async function saveRide(){
+  if (!DATA) return;
+  const name = prompt("보관함에 저장할 이름", DATA.name);
+  if (name === null) return;
+  await dbPut(makeRecord(DATA.pts, name || DATA.name));
+  const b = document.getElementById("btnSave");
+  b.textContent = "저장됨 ✓"; b.disabled = true;
+  setTimeout(()=>{ b.textContent = "보관함에 저장"; b.disabled = false; }, 1600);
+}
+
+async function loadRide(id){
+  const rides = await dbAll();
+  const r = rides.find(x=>x.id === id);
+  if (!r) return;
+  renderReport(r.points, r.name);
+}
+
+/* ---------------- library (갤러리) ---------------- */
+const esc = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+let LIB_CACHE = [];
+async function showLibrary(){
+  showView("library");
+  LIB_CACHE = await dbAll();
+  document.getElementById("libCount").textContent = LIB_CACHE.length ? `${LIB_CACHE.length}개 저장됨 · 이 기기에만 보관` : "";
+  document.getElementById("libEmpty").style.display = LIB_CACHE.length ? "none" : "";
+  document.getElementById("libListCard").style.display = LIB_CACHE.length ? "" : "none";
+  document.getElementById("loadCard").style.display = LIB_CACHE.length ? "" : "none";
+  if (!LIB_CACHE.length) return;
+  renderGallery();
+  renderLoadChart(LIB_CACHE);
+}
+function renderGallery(){
+  const q = (document.getElementById("libSearch").value || "").trim().toLowerCase();
+  const sort = document.getElementById("libSort").value;
+  const key = { date: r=>r.date, dist: r=>r.stats.distance||0,
+                gain: r=>r.stats.gain||0, tss: r=>r.stats.tss||0 }[sort];
+  const rides = LIB_CACHE
+    .filter(r => !q || r.name.toLowerCase().includes(q))
+    .sort((a,b)=>key(b)-key(a));
+  const g = document.getElementById("gallery");
+  if (!rides.length){
+    g.innerHTML = `<p class="gempty">"${esc(q)}"에 해당하는 라이딩이 없습니다.</p>`;
+    return;
+  }
+  g.innerHTML = rides.map(r=>{
+    const d = new Date(r.date);
+    return `<div class="gcard">
+      <div class="thumb"><canvas id="th${r.id}" height="118" aria-label="${esc(r.name)} 경로 미리보기"></canvas>
+        <input type="checkbox" class="cmpChk chk" data-id="${r.id}" aria-label="비교 선택"></div>
+      <div class="gbody">
+        <div class="gname" data-load="${r.id}" title="${esc(r.name)}">${esc(r.name)}</div>
+        <div class="gmeta">${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. · ${fmt.km(r.stats.distance)} km · ↑${fmt.n0(r.stats.gain)} m${r.stats.tss!=null?` · TSS ${fmt.n0(r.stats.tss)}`:""}</div>
+      </div>
+      <div class="acts">
+        <button class="btn" data-load="${r.id}">열기</button>
+        <button class="btn" data-gpx="${r.id}">GPX</button>
+        <button class="btn" data-del="${r.id}">삭제</button>
+      </div>
+    </div>`;
+  }).join("");
+  for (const r of rides) drawThumb(document.getElementById("th"+r.id), r.points);
+}
+
+function drawThumb(cv, pts){
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 200, h = 118;
+  cv.width = w*dpr; cv.height = h*dpr;
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = "#171b23"; ctx.fillRect(0,0,w,h);
+  const geo = pts.filter(p=>p.lat!=null&&p.lon!=null);
+  if (geo.length > 1){
+    const k = Math.cos(geo[0].lat*Math.PI/180);
+    let xMin=1e9,xMax=-1e9,yMin=1e9,yMax=-1e9;
+    for (const p of geo){ const x=p.lon*k, y=p.lat;
+      if(x<xMin)xMin=x; if(x>xMax)xMax=x; if(y<yMin)yMin=y; if(y>yMax)yMax=y; }
+    const pad = 12;
+    const sc = Math.min((w-2*pad)/((xMax-xMin)||1e-9), (h-2*pad)/((yMax-yMin)||1e-9));
+    const ox = (w-(xMax-xMin)*sc)/2, oy = (h-(yMax-yMin)*sc)/2;
+    const px = p => [ox+(p.lon*k-xMin)*sc, h-(oy+(p.lat-yMin)*sc)];
+    ctx.beginPath();
+    const step = Math.max(1, Math.floor(geo.length/400));
+    for (let i=0;i<geo.length;i+=step){
+      const [x,y] = px(geo[i]);
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    }
+    ctx.strokeStyle = "#3987e5"; ctx.lineWidth = 1.8; ctx.lineJoin = "round"; ctx.stroke();
+    for (const [p,c] of [[geo[0],"#0ca30c"],[geo[geo.length-1],"#d03b3b"]]){
+      const [x,y] = px(p);
+      ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fillStyle=c; ctx.fill();
+    }
+  } else {
+    // GPS가 없으면 고도 실루엣으로 대체
+    const ele = pts.map(p=>p.eleS).filter(v=>v!=null);
+    if (ele.length > 3){
+      const eMin = Math.min(...ele), eMax = Math.max(...ele);
+      ctx.beginPath();
+      ele.forEach((v,i)=>{
+        const x = i/(ele.length-1)*w;
+        const y = h-10 - (eMax>eMin ? (v-eMin)/(eMax-eMin) : .5)*(h-30);
+        i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+      });
+      ctx.strokeStyle = "rgba(240,166,58,.8)"; ctx.lineWidth = 1.6; ctx.stroke();
+    } else {
+      ctx.fillStyle = "#7a8090"; ctx.font = "11px system-ui";
+      ctx.fillText("경로 데이터 없음", 12, 20);
+    }
+  }
+}
+
+/* ---------------- GPX 내보내기 ---------------- */
+const escXml = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function toGpx(r){
+  const pts = r.points.filter(p=>p.lat!=null&&p.lon!=null);
+  if (!pts.length) return null;
+  const seg = pts.map(p=>{
+    let ext = "";
+    if (p.pwr != null) ext += `<power>${Math.round(p.pwr)}</power>`;
+    if (p.hr != null || p.cad != null)
+      ext += `<gpxtpx:TrackPointExtension>${p.hr!=null?`<gpxtpx:hr>${Math.round(p.hr)}</gpxtpx:hr>`:""}${p.cad!=null?`<gpxtpx:cad>${Math.round(p.cad)}</gpxtpx:cad>`:""}</gpxtpx:TrackPointExtension>`;
+    return `<trkpt lat="${p.lat.toFixed(7)}" lon="${p.lon.toFixed(7)}">`
+      + (p.ele!=null?`<ele>${p.ele.toFixed(1)}</ele>`:"")
+      + (p.t!=null?`<time>${new Date(p.t*1000).toISOString()}</time>`:"")
+      + (ext?`<extensions>${ext}</extensions>`:"") + `</trkpt>`;
+  }).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="RideLens" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+<trk><name>${escXml(r.name)}</name><trkseg>
+${seg}
+</trkseg></trk>
+</gpx>`;
+}
+function exportGpx(id){
+  const r = LIB_CACHE.find(x=>x.id===id);
+  if (!r) return;
+  const xml = toGpx(r);
+  if (!xml){ alert("이 라이딩에는 GPS 경로가 없어 GPX로 내보낼 수 없습니다."); return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([xml], {type:"application/gpx+xml"}));
+  a.download = r.name.replace(/[\\/:*?"<>|\s]+/g,"-") + ".gpx";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ---------------- training load (CTL/ATL/TSB) ---------------- */
+let loadGeo = null;
+function renderLoadChart(rides){
+  const holder = document.getElementById("loadChart");
+  const old = holder.querySelector("svg"); if (old) old.remove();
+  const note = holder.querySelector(".locknote"); if (note) note.remove();
+  loadGeo = null;
+  if (!isPro()){
+    holder.insertAdjacentHTML("beforeend",
+      `<p class="empty locknote" style="padding:22px 0">훈련 부하 추적은 <b style="color:var(--accent)">Pro</b> 기능입니다 — 저장된 라이딩의 TSS로 체력(CTL)·피로(ATL)·컨디션(TSB)을 계산합니다.</p>`);
+    return;
+  }
+  const day = 86400000;
+  const byDay = {};
+  for (const r of rides){
+    const k = Math.floor((r.date + 9*3600000) / day); // KST day bucket
+    byDay[k] = (byDay[k]||0) + (r.stats.tss || 0);
+  }
+  const keys = Object.keys(byDay).map(Number);
+  const start = Math.min(...keys) - 7, end = Math.floor((Date.now() + 9*3600000)/day);
+  const series = [];
+  let ctl = 0, atl = 0;
+  for (let k=start; k<=end; k++){
+    const tss = byDay[k] || 0;
+    ctl += (tss - ctl)/42;
+    atl += (tss - atl)/7;
+    series.push({k, tss, ctl, atl, tsb: ctl-atl});
+  }
+  const W = Math.max(320, holder.clientWidth), H = 190, padL=42, padR=12, padT=10, padB=24;
+  const yMax = Math.max(...series.map(d=>Math.max(d.tss, d.ctl, d.atl)), 10)*1.1;
+  const sx = i => padL + i/(series.length-1||1)*(W-padL-padR);
+  const sy = v => padT + (1-v/yMax)*(H-padT-padB);
+  let grid="", labels="";
+  for (const t of niceTicks(0,yMax,4)){
+    grid += `<line x1="${padL}" x2="${W-padR}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--grid)"/>`;
+    labels += `<text x="${padL-8}" y="${sy(t)+3.5}" text-anchor="end" fill="var(--muted)" font-size="10.5">${fmt.n0(t)}</text>`;
+  }
+  const nLab = Math.min(6, series.length);
+  for (let j=0;j<nLab;j++){
+    const i = Math.round(j*(series.length-1)/(nLab-1||1));
+    const d = new Date(series[i].k*day);
+    labels += `<text x="${sx(i)}" y="${H-7}" text-anchor="middle" fill="var(--muted)" font-size="10.5">${d.getMonth()+1}/${d.getDate()}</text>`;
+  }
+  const bw = Math.max(1, (W-padL-padR)/series.length*0.55);
+  let bars = "";
+  series.forEach((d,i)=>{ if (d.tss>0) bars += `<rect x="${(sx(i)-bw/2).toFixed(1)}" y="${sy(d.tss).toFixed(1)}" width="${bw.toFixed(1)}" height="${(sy(0)-sy(d.tss)).toFixed(1)}" fill="#3a4152" rx="1.5"/>`; });
+  const line = key => series.map((d,i)=>(i?"L":"M")+sx(i).toFixed(1)+" "+sy(d[key]).toFixed(1)).join(" ");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("height",H);
+  svg.setAttribute("role","img"); svg.setAttribute("aria-label","훈련 부하 차트");
+  svg.innerHTML = grid + bars +
+    `<path d="${line("ctl")}" fill="none" stroke="var(--c-speed)" stroke-width="2"/>` +
+    `<path d="${line("atl")}" fill="none" stroke="var(--c-pwr)" stroke-width="2"/>` + labels +
+    `<line class="xh" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="rgba(255,255,255,.35)" visibility="hidden"/>`;
+  holder.appendChild(svg);
+  loadGeo = {series, W, H, padL, padR, sx, sy, svg, holder};
+  const move = clientX => {
+    const r = holder.getBoundingClientRect();
+    const i = Math.max(0, Math.min(series.length-1, Math.round((clientX-r.left-padL)/(W-padL-padR)*(series.length-1))));
+    const d = series[i], tip = holder.querySelector(".tip"), xh = svg.querySelector(".xh");
+    xh.setAttribute("x1",sx(i)); xh.setAttribute("x2",sx(i)); xh.setAttribute("visibility","visible");
+    const dt = new Date(d.k*day);
+    tip.style.display="block";
+    tip.innerHTML = `<span class="d">${dt.getMonth()+1}/${dt.getDate()}</span> · TSS <b>${fmt.n0(d.tss)}</b> · CTL <b>${fmt.n1(d.ctl)}</b> · ATL <b>${fmt.n1(d.atl)}</b> · TSB <b>${fmt.n1(d.tsb)}</b>`;
+    tip.style.left = Math.min(Math.max(sx(i)-tip.offsetWidth/2, 4), W-tip.offsetWidth-4)+"px";
+    tip.style.top = "2px";
+  };
+  holder.onmousemove = e => move(e.clientX);
+  holder.onmouseleave = ()=>{ svg.querySelector(".xh").setAttribute("visibility","hidden"); holder.querySelector(".tip").style.display="none"; };
+  holder.ontouchstart = holder.ontouchmove = e => { if(e.touches[0]) move(e.touches[0].clientX); };
+}
+
+/* ---------------- compare ---------------- */
+const CMP_COLORS = ["#3987e5","#199e70","#c98500","#9085e9"];
+let multiCharts = [];
+async function runCompare(){
+  if (!isPro()){ openLic(); return; }
+  const ids = [...document.querySelectorAll(".cmpChk:checked")].map(c=>+c.dataset.id);
+  if (ids.length < 2 || ids.length > 4){
+    alert("비교할 라이딩을 2~4개 선택해 주세요."); return;
+  }
+  const all = await dbAll();
+  renderCompare(ids.map(id=>all.find(r=>r.id===id)).filter(Boolean));
+}
+function renderCompare(rides){
+  showView("compare");
+  const dot = i => `<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CMP_COLORS[i]};margin-right:6px;vertical-align:0"></i>`;
+  const head = `<tr><th style="text-align:left">항목</th>${rides.map((r,i)=>`<th>${dot(i)}${r.name.replace(/</g,"&lt;")}</th>`).join("")}</tr>`;
+  const row = (lbl, get) => `<tr><td>${lbl}</td>${rides.map(r=>`<td>${get(r.stats)}</td>`).join("")}</tr>`;
+  document.getElementById("cmpTable").innerHTML = head +
+    row("날짜", s=>new Date((s.startTime||0)*1000).toLocaleDateString("ko-KR")) +
+    row("거리", s=>fmt.km(s.distance)+" km") +
+    row("이동 시간", s=>fmt.dur(s.moving)) +
+    row("평균 속도", s=>s.avgSpd!=null?(s.avgSpd*3.6).toFixed(1)+" km/h":"–") +
+    row("획득 고도", s=>fmt.n0(s.gain)+" m") +
+    row("평균 파워", s=>s.avgPwr!=null?fmt.n0(s.avgPwr)+" W":"–") +
+    row("NP", s=>s.np!=null?fmt.n0(s.np)+" W":"–") +
+    row("TSS", s=>s.tss!=null?fmt.n0(s.tss):"–") +
+    row("평균 심박", s=>s.avgHr!=null?fmt.n0(s.avgHr)+" bpm":"–");
+  const box = document.getElementById("cmpCharts");
+  box.innerHTML = ""; multiCharts = [];
+  const defs = [
+    {title:"고도", get:p=>p.eleS, fmt:v=>fmt.n0(v)+" m"},
+    {title:"속도", get:p=>p.spd==null?null:p.spd*3.6, fmt:v=>fmt.n1(v)+" km/h", zeroBase:true},
+    {title:"파워", get:p=>p.pwr, fmt:v=>fmt.n0(v)+" W", zeroBase:true},
+    {title:"심박", get:p=>p.hr, fmt:v=>fmt.n0(v)+" bpm"}
+  ];
+  for (const d of defs){
+    const series = rides.map((r,i)=>({ name:r.name, color:CMP_COLORS[i],
+      data: downsample(r.points, d.get, 500) })).filter(s=>s.data.length > 3);
+    if (!series.length) continue;
+    buildMulti(box, {title:d.title, series, fmt:d.fmt, zeroBase:d.zeroBase});
+  }
+}
+
+function buildMulti(container, cfg){
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<h3><i style="background:var(--c-elev)"></i>${cfg.title}</h3>
+    <div class="legend">${cfg.series.map(s=>`<span><i style="background:${s.color}"></i>${s.name.replace(/</g,"&lt;")}</span>`).join("")}</div>
+    <div class="chart-wrap"><div class="tip"></div></div>`;
+  container.appendChild(card);
+  const wrap = card.querySelector(".chart-wrap");
+  const H = 190, padL = 46, padR = 12, padT = 10, padB = 24;
+  let geo = null;
+  function render(){
+    const W = Math.max(320, wrap.clientWidth);
+    const xMax = Math.max(...cfg.series.map(s=>s.data[s.data.length-1].x));
+    let yMin = Math.min(...cfg.series.map(s=>Math.min(...s.data.map(d=>d.y))));
+    let yMax = Math.max(...cfg.series.map(s=>Math.max(...s.data.map(d=>d.y))));
+    if (cfg.zeroBase) yMin = 0;
+    if (yMax-yMin < 1e-6) yMax = yMin+1;
+    const p = (yMax-yMin)*0.08; yMax += p; if (!cfg.zeroBase) yMin -= p;
+    const sx = x => padL + x/xMax*(W-padL-padR);
+    const sy = y => padT + (1-(y-yMin)/(yMax-yMin))*(H-padT-padB);
+    let grid="", labels="";
+    for (const t of niceTicks(yMin,yMax,4)){
+      grid += `<line x1="${padL}" x2="${W-padR}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--grid)"/>`;
+      labels += `<text x="${padL-8}" y="${sy(t)+3.5}" text-anchor="end" fill="var(--muted)" font-size="10.5">${fmt.n0(t)}</text>`;
+    }
+    for (const t of niceTicks(0,xMax,6))
+      labels += `<text x="${sx(t)}" y="${H-7}" text-anchor="middle" fill="var(--muted)" font-size="10.5">${Math.round(t)}km</text>`;
+    let paths = "";
+    for (const s of cfg.series){
+      let d = "";
+      s.data.forEach((pt,i)=>{ d += (i?"L":"M")+sx(pt.x).toFixed(1)+" "+sy(pt.y).toFixed(1)+" "; });
+      paths += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" opacity=".92"/>`;
+    }
+    const old = wrap.querySelector("svg"); if (old) old.remove();
+    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("height",H);
+    svg.setAttribute("role","img"); svg.setAttribute("aria-label",cfg.title+" 비교 차트");
+    svg.innerHTML = grid + paths + labels +
+      `<line class="xh" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="rgba(255,255,255,.35)" visibility="hidden"/>`;
+    wrap.appendChild(svg);
+    geo = {W, xMax, sx, sy};
+  }
+  const move = clientX => {
+    if (!geo) return;
+    const r = wrap.getBoundingClientRect();
+    const xKm = Math.max(0, Math.min(geo.xMax, (clientX-r.left-padL)/(geo.W-padL-padR)*geo.xMax));
+    const svg = wrap.querySelector("svg"), tip = wrap.querySelector(".tip");
+    const xh = svg.querySelector(".xh");
+    xh.setAttribute("x1",geo.sx(xKm)); xh.setAttribute("x2",geo.sx(xKm)); xh.setAttribute("visibility","visible");
+    const parts = cfg.series.map(s=>{
+      let lo=0, hi=s.data.length-1;
+      while (hi-lo>1){ const m=(lo+hi)>>1; (s.data[m].x<xKm)?lo=m:hi=m; }
+      const d = (Math.abs(s.data[lo].x-xKm)<Math.abs(s.data[hi].x-xKm))?s.data[lo]:s.data[hi];
+      if (Math.abs(d.x-xKm) > geo.xMax*0.03) return null;
+      return `<i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${s.color};margin:0 4px 0 8px"></i><b>${cfg.fmt(d.y)}</b>`;
+    }).filter(Boolean);
+    if (!parts.length){ tip.style.display="none"; return; }
+    tip.style.display="block";
+    tip.innerHTML = `<span class="d">${xKm.toFixed(1)} km</span>` + parts.join("");
+    tip.style.left = Math.min(Math.max(geo.sx(xKm)-tip.offsetWidth/2, 4), geo.W-tip.offsetWidth-4)+"px";
+    tip.style.top = "2px";
+  };
+  wrap.addEventListener("mousemove", e=>move(e.clientX));
+  wrap.addEventListener("mouseleave", ()=>{
+    const svg = wrap.querySelector("svg");
+    if (svg) svg.querySelector(".xh").setAttribute("visibility","hidden");
+    wrap.querySelector(".tip").style.display="none";
+  });
+  ["touchstart","touchmove"].forEach(ev=>wrap.addEventListener(ev, e=>{ if(e.touches[0]) move(e.touches[0].clientX); }, {passive:true}));
+  multiCharts.push({render});
+  render();
+}
+
+/* ---------------- backup ---------------- */
+async function exportBackup(){
+  const rides = await dbAll();
+  const blob = new Blob([JSON.stringify({app:"ridelens", version:1, exported:new Date().toISOString(), rides})], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ridelens-backup.json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+async function importBackup(file){
+  try{
+    const j = JSON.parse(await file.text());
+    if (j.app !== "ridelens" || !Array.isArray(j.rides)) throw new Error("bad");
+    for (const r of j.rides) await dbPut(r);
+    showLibrary();
+  }catch(e){ alert("백업 파일을 읽을 수 없습니다. ridelens-backup.json 파일인지 확인해 주세요."); }
+}
+
+/* ---------------- share card ---------------- */
+function ellipsize(ctx, text, maxW){
+  if (ctx.measureText(text).width <= maxW) return text;
+  while (text.length > 1 && ctx.measureText(text+"…").width > maxW) text = text.slice(0,-1);
+  return text + "…";
+}
+function drawShareCard(){
+  const cv = document.getElementById("shareCanvas");
+  const ctx = cv.getContext("2d");
+  const W = 1080, H = 1350;
+  const ftp = +document.getElementById("ftp").value || 220;
+  const s = computeStats(DATA.pts, ftp);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = "#0d0f13"; ctx.fillRect(0,0,W,H);
+  const glow = ctx.createRadialGradient(W/2, H, 80, W/2, H, 700);
+  glow.addColorStop(0, "rgba(240,166,58,.16)"); glow.addColorStop(1, "rgba(240,166,58,0)");
+  ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+  const F = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  // logo
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `800 54px ${F}`;
+  ctx.fillStyle = "#eef1f6"; ctx.fillText("Ride", 72, 118);
+  ctx.fillStyle = "#f0a63a"; ctx.fillText("Lens", 72 + ctx.measureText("Ride").width, 118);
+  ctx.font = `400 27px ${F}`; ctx.fillStyle = "#7a8090";
+  ctx.fillText("업로드 없는 라이딩 분석", 72, 162);
+  // ride name & date
+  ctx.font = `800 62px ${F}`; ctx.fillStyle = "#eef1f6";
+  ctx.fillText(ellipsize(ctx, DATA.name, W-144), 72, 280);
+  const dt = s.startTime ? new Date(s.startTime*1000) : new Date();
+  ctx.font = `400 32px ${F}`; ctx.fillStyle = "#a7adba";
+  ctx.fillText(dt.toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"short"}), 72, 336);
+  // stat grid 2x3
+  const cells = [
+    ["거리", fmt.km(s.distance), "km"],
+    ["이동 시간", fmt.dur(s.moving), ""],
+    ["획득 고도", fmt.n0(s.gain), "m"],
+    ["평균 속도", s.avgSpd!=null?(s.avgSpd*3.6).toFixed(1):"–", "km/h"],
+    s.np!=null ? ["NP", fmt.n0(s.np), "W"] : ["최고 속도", fmt.kmh(s.maxSpd), "km/h"],
+    s.tss!=null ? ["TSS", fmt.n0(s.tss), ""] : (s.avgHr!=null ? ["평균 심박", fmt.n0(s.avgHr), "bpm"] : ["칼로리 소모", s.kj?fmt.n0(s.kj):"–", "kJ"])
+  ];
+  cells.forEach((c,i)=>{
+    const col = i%2, rowI = Math.floor(i/2);
+    const x = 72 + col*486, y = 430 + rowI*152;
+    ctx.font = `700 25px ${F}`; ctx.fillStyle = "#7a8090";
+    ctx.fillText(c[0], x, y);
+    ctx.font = `800 74px ${F}`; ctx.fillStyle = "#eef1f6";
+    ctx.fillText(c[1], x, y+82);
+    if (c[2]){
+      const numW = ctx.measureText(c[1]).width;
+      ctx.font = `600 30px ${F}`; ctx.fillStyle = "#a7adba";
+      ctx.fillText(c[2], x + numW + 10, y+82);
+    }
+  });
+  // route (right of grid area → centered strip)
+  const geoPts = DATA.pts.filter(p=>p.lat!=null&&p.lon!=null);
+  if (geoPts.length > 1){
+    const k = Math.cos(geoPts[0].lat*Math.PI/180);
+    let xMin=1e9,xMax=-1e9,yMin=1e9,yMax=-1e9;
+    for (const p of geoPts){ const x=p.lon*k, y=p.lat;
+      if(x<xMin)xMin=x; if(x>xMax)xMax=x; if(y<yMin)yMin=y; if(y>yMax)yMax=y; }
+    const bx=72, by=900, bw=W-144, bh=230;
+    const sc = Math.min(bw/((xMax-xMin)||1e-9), bh/((yMax-yMin)||1e-9));
+    const ox = bx + (bw-(xMax-xMin)*sc)/2, oy = by + (bh-(yMax-yMin)*sc)/2;
+    ctx.beginPath();
+    const step = Math.max(1, Math.floor(geoPts.length/600));
+    for (let i=0;i<geoPts.length;i+=step){
+      const p = geoPts[i];
+      const x = ox + (p.lon*k-xMin)*sc, y = by + bh - ((oy-by) + (p.lat-yMin)*sc);
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    }
+    ctx.strokeStyle = "#3987e5"; ctx.lineWidth = 5; ctx.lineJoin = "round"; ctx.stroke();
+  }
+  // elevation silhouette
+  const ele = downsample(DATA.pts, p=>p.eleS, 300);
+  if (ele.length > 3){
+    const eMin = Math.min(...ele.map(d=>d.y)), eMax = Math.max(...ele.map(d=>d.y));
+    const bx=0, by=1170, bw=W, bh=120;
+    ctx.beginPath();
+    ele.forEach((d,i)=>{
+      const x = bx + d.x/ele[ele.length-1].x*bw;
+      const y = by + bh - (eMax>eMin ? (d.y-eMin)/(eMax-eMin) : 0.5)*bh;
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    });
+    ctx.strokeStyle = "rgba(240,166,58,.9)"; ctx.lineWidth = 3; ctx.stroke();
+    ctx.lineTo(bx+bw, by+bh+40); ctx.lineTo(bx, by+bh+40); ctx.closePath();
+    const g = ctx.createLinearGradient(0, by, 0, by+bh+40);
+    g.addColorStop(0, "rgba(240,166,58,.22)"); g.addColorStop(1, "rgba(240,166,58,0)");
+    ctx.fillStyle = g; ctx.fill();
+  }
+  ctx.font = `600 26px ${F}`; ctx.fillStyle = "#7a8090"; ctx.textAlign = "center";
+  ctx.fillText("RideLens — 파일은 브라우저 밖으로 나가지 않습니다", W/2, H-28);
+  ctx.textAlign = "left";
+}
+function openShare(){
+  if (!DATA) return;
+  drawShareCard();
+  document.getElementById("shareOverlay").classList.add("open");
+}
+function shareText(){
+  const ftp = +document.getElementById("ftp").value || 220;
+  const s = computeStats(DATA.pts, ftp);
+  return `${DATA.name} · ${fmt.km(s.distance)}km · ${fmt.dur(s.moving)} · 획득고도 ${fmt.n0(s.gain)}m — RideLens로 분석 #라이딩 #RideLens`;
+}
+function cardBlob(){
+  return new Promise(res=>document.getElementById("shareCanvas").toBlob(res, "image/png"));
+}
+function downloadCard(blob){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ridelens-${(DATA?DATA.name:"ride").replace(/[\\/:*?"<>|\s]+/g,"-")}.png`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+async function shareCard(){
+  const blob = await cardBlob();
+  const file = new File([blob], "ridelens.png", {type:"image/png"});
+  if (navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], text: shareText()}); }catch(e){ /* 사용자가 취소 */ }
+  } else if (navigator.share){
+    try{ await navigator.share({title:"RideLens", text: shareText()}); }catch(e){}
+    downloadCard(blob);
+  } else {
+    downloadCard(blob);
+    try{ await navigator.clipboard.writeText(shareText()); }catch(e){}
+  }
+}
+
+/* ---------------- wiring ---------------- */
+const $file = document.getElementById("file");
+const $dz = document.getElementById("dropzone");
+const $err = document.getElementById("err");
+
+function openPicker(){ $file.click(); }
+function showError(msg){ $err.textContent = "분석 실패: " + msg + " — 원본 FIT 파일 또는 GPX 내보내기 파일인지 확인해 주세요."; $err.style.display = "block"; }
+
+async function parseFile(f){
+  const name = f.name.replace(/\.(fit|gpx)$/i,"");
+  let pts;
+  if (/\.fit$/i.test(f.name)) pts = parseFit(await f.arrayBuffer());
+  else if (/\.gpx$/i.test(f.name)) pts = parseGpx(await f.text());
+  else throw new Error("지원하지 않는 형식입니다 (.fit / .gpx)");
+  pts = prepare(pts.filter(p => p.dist != null || p.lat != null));
+  if (pts.length < 10) throw new Error("데이터 포인트가 부족합니다");
+  return {pts, name};
+}
+
+async function handleFile(f){
+  $err.style.display = "none";
+  try{
+    const {pts, name} = await parseFile(f);
+    renderReport(pts, name);
+  }catch(e){ showError(e.message); }
+}
+
+// 여러 파일을 한꺼번에 놓으면 분석해서 보관함 갤러리로 일괄 저장
+async function handleFiles(files){
+  files = [...files];
+  if (files.length <= 1){ if (files[0]) handleFile(files[0]); return; }
+  $err.style.display = "none";
+  let ok = 0; const failed = [];
+  let id = Date.now();
+  for (const f of files){
+    try{
+      const {pts, name} = await parseFile(f);
+      await dbPut(makeRecord(pts, name, id++));
+      ok++;
+    }catch(e){ failed.push(f.name); }
+  }
+  await showLibrary();
+  if (failed.length) alert(`${ok}개를 보관함으로 가져왔습니다.\n실패 ${failed.length}개: ${failed.join(", ")}`);
+}
+
+$file.addEventListener("change", e=>{ handleFiles(e.target.files); e.target.value=""; });
+document.getElementById("btnOpen").addEventListener("click", openPicker);
+document.getElementById("btnOpen2").addEventListener("click", e=>{ e.stopPropagation(); openPicker(); });
+$dz.addEventListener("click", openPicker);
+$dz.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openPicker(); } });
+["dragover","dragenter"].forEach(ev=>$dz.addEventListener(ev, e=>{ e.preventDefault(); $dz.classList.add("drag"); }));
+["dragleave","drop"].forEach(ev=>$dz.addEventListener(ev, e=>{ e.preventDefault(); $dz.classList.remove("drag"); }));
+$dz.addEventListener("drop", e=>{ handleFiles(e.dataTransfer.files); });
+document.addEventListener("dragover", e=>e.preventDefault());
+document.addEventListener("drop", e=>e.preventDefault());
+
+function runDemo(){ renderReport(prepare(demoRide()), "북악 순환 라이딩 (데모)"); }
+document.getElementById("btnDemo").addEventListener("click", runDemo);
+document.getElementById("btnDemo2").addEventListener("click", e=>{ e.stopPropagation(); runDemo(); });
+
+const $ftp = document.getElementById("ftp");
+try{ const v = localStorage.getItem("ridelens_ftp"); if (v) $ftp.value = v; }catch(e){}
+$ftp.addEventListener("change", ()=>{
+  try{ localStorage.setItem("ridelens_ftp", $ftp.value); }catch(e){}
+  if (DATA) renderReport(DATA.pts, DATA.name);
+});
+
+document.getElementById("btnPro").addEventListener("click", openLic);
+document.getElementById("btnLib").addEventListener("click", showLibrary);
+document.getElementById("btnSave").addEventListener("click", saveRide);
+document.getElementById("btnShare").addEventListener("click", openShare);
+document.getElementById("btnPdf").addEventListener("click", ()=>{ isPro() ? window.print() : openLic(); });
+document.getElementById("btnCompare").addEventListener("click", runCompare);
+document.getElementById("btnBackLib").addEventListener("click", showLibrary);
+document.getElementById("btnExport").addEventListener("click", exportBackup);
+document.getElementById("btnImport").addEventListener("click", ()=>document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", e=>{
+  if (e.target.files[0]) importBackup(e.target.files[0]);
+  e.target.value = "";
+});
+document.getElementById("gallery").addEventListener("click", async e=>{
+  const load = e.target.closest("[data-load]");
+  if (load){ loadRide(+load.dataset.load); return; }
+  const gpx = e.target.closest("[data-gpx]");
+  if (gpx){ exportGpx(+gpx.dataset.gpx); return; }
+  const del = e.target.closest("[data-del]");
+  if (del && confirm("이 라이딩을 보관함에서 삭제할까요?")){
+    await dbDel(+del.dataset.del);
+    showLibrary();
+  }
+});
+document.getElementById("libSearch").addEventListener("input", renderGallery);
+document.getElementById("libSort").addEventListener("change", renderGallery);
+
+document.getElementById("btnActivate").addEventListener("click", ()=>{
+  const k = document.getElementById("licKey").value;
+  if (keyValid(k)){
+    try{ localStorage.setItem("ridelens_license", k.trim().toUpperCase()); }catch(e){}
+    closeLic(); applyProUi();
+    if (document.getElementById("library").style.display !== "none") showLibrary();
+  } else {
+    document.getElementById("licErr").style.display = "block";
+  }
+});
+document.getElementById("licKey").addEventListener("keydown", e=>{ if (e.key === "Enter") document.getElementById("btnActivate").click(); });
+document.getElementById("btnLicClose").addEventListener("click", closeLic);
+document.getElementById("btnShareGo").addEventListener("click", shareCard);
+document.getElementById("btnShareDl").addEventListener("click", async ()=>downloadCard(await cardBlob()));
+document.getElementById("btnShareClose").addEventListener("click", ()=>document.getElementById("shareOverlay").classList.remove("open"));
+for (const ov of document.querySelectorAll(".overlay"))
+  ov.addEventListener("click", e=>{ if (e.target === ov) ov.classList.remove("open"); });
+
+applyProUi();
+
+let rsT = null;
+window.addEventListener("resize", ()=>{
+  clearTimeout(rsT);
+  rsT = setTimeout(()=>{
+    if (DATA && document.getElementById("report").style.display !== "none"){ charts.forEach(c=>c.render()); drawMap(DATA.pts); }
+    if (document.getElementById("compare").style.display !== "none") multiCharts.forEach(c=>c.render());
+    if (document.getElementById("library").style.display !== "none") renderGallery();
+  }, 150);
+});
+</script>
+</body>
+</html>
