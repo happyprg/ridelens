@@ -188,6 +188,52 @@
   .modal.share{max-width:380px;text-align:center}
   #shareCanvas{width:100%;max-width:280px;height:auto;border-radius:10px;border:1px solid var(--hairline);margin:6px auto 4px;display:block}
 
+  /* rider RPG */
+  .rider{display:grid;grid-template-columns:6fr 6fr;gap:18px;align-items:center;padding:6px 0 4px}
+  @media(max-width:760px){.rider{grid-template-columns:1fr}}
+  .rc-head{display:flex;gap:14px;align-items:center}
+  .rc-ava{width:64px;height:64px;border-radius:16px;background:var(--chip);border:1px solid var(--hairline);display:flex;align-items:center;justify-content:center;font-size:34px;flex:none}
+  .rc-cls{font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .rc-desc{font-size:12px;color:var(--ink2);margin-top:2px}
+  .xpbar{height:8px;background:var(--chip);border-radius:99px;overflow:hidden;margin-top:6px}
+  .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#f7b95e);border-radius:99px}
+  .rc-lv{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:14px}
+  .rc-pct{margin-top:10px;font-size:12px;color:var(--ink2);background:var(--chip);border-radius:8px;padding:8px 11px;line-height:1.5}
+  .rider svg{display:block;width:100%;max-width:300px;margin:0 auto}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0 8px}
+  .chip{font-size:12px;background:var(--chip);border:1px solid var(--hairline);border-radius:999px;padding:5px 11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .chip b{color:var(--ink)}
+  .chip.up b{color:#4cc38a}
+  .chip.down b{color:#f0918f}
+  .chip.pr{border-color:rgba(240,166,58,.55);color:var(--accent);background:rgba(240,166,58,.08);font-weight:700}
+  .tracks{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
+  .track{background:var(--chip);border:1px solid var(--hairline);border-radius:10px;padding:10px 13px}
+  .track .t-top{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650}
+  .track .pips{margin-left:auto;font-size:11px;color:var(--accent);letter-spacing:2px}
+  .t-next{font-size:12px;color:var(--ink2);margin-top:5px;line-height:1.5}
+  .t-how{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .t-prog{height:5px;background:var(--surface);border-radius:99px;overflow:hidden;margin-top:7px}
+  .t-prog i{display:block;height:100%;background:var(--c-speed);border-radius:99px}
+  .locked-box{position:relative;overflow:hidden;border-radius:10px}
+  .locked-box .blur{filter:blur(5px);opacity:.5;pointer-events:none;user-select:none}
+  .locked-box .cta{position:absolute;inset:0;display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:center;text-align:center;padding:12px}
+  .catb{display:inline-block;min-width:30px;text-align:center;font-size:10.5px;font-weight:800;border-radius:5px;padding:2px 7px;color:#fff}
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:4px 0 10px}
+  .badge{background:var(--chip);border:1px solid var(--hairline);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+  .badge .be{font-size:22px;flex:none}
+  .badge .bt{font-size:12.5px;font-weight:700}
+  .badge .bd{font-size:11px;color:var(--muted);margin-top:1px}
+  .badge.off{opacity:.4;filter:grayscale(.7)}
+  .plansmini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px}
+  .planbtn{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:11px 6px;text-decoration:none;color:var(--ink)}
+  .planbtn:hover{border-color:rgba(240,166,58,.5)}
+  .planbtn b{font-size:15px}
+  .planbtn span{font-size:10.5px;color:var(--muted)}
+  .planbtn.best{border-color:rgba(240,166,58,.6);background:rgba(240,166,58,.07)}
+  .planbtn.best span{color:var(--accent)}
+  .modal input[type=email]{width:100%;background:var(--surface);border:1px solid var(--hairline);color:var(--ink);border-radius:8px;padding:9px 12px;font:inherit;margin-top:9px;font-size:13px}
+  .modal input[type=email]:focus{outline:2px solid var(--accent);outline-offset:1px}
+
   .print-head{display:none}
   @media print{
     :root{
@@ -251,6 +297,9 @@
       </div>
     </div>
     <div class="tiles" id="tiles"></div>
+    <div id="riderCard"></div>
+    <div id="growthCard"></div>
+    <div id="climbCard"></div>
     <div id="charts"></div>
     <div class="duo">
       <div class="card"><h3><i style="background:var(--c-speed)"></i>경로</h3>
@@ -263,7 +312,7 @@
     </div>
     <div class="pro">
       <div class="grow"><b>RideLens Pro</b>
-        <p>PDF 라이딩 리포트 · 여러 라이딩 비교 · 훈련 부하(CTL/ATL) 추적 — ₩29,000 평생 라이선스</p>
+        <p>성장 퀘스트 · PR 추적 · 지난 라이딩 비교 · PDF 리포트 · 훈련 부하 — 월 ₩1,900부터 (연 ₩15,000 · 평생 ₩39,000)</p>
       </div>
       <button class="btn primary" id="btnPro">Pro 알아보기</button>
     </div>
@@ -283,6 +332,10 @@
       <h3><i style="background:var(--c-speed)"></i>훈련 부하</h3>
       <div class="legend"><span><i style="background:var(--c-speed)"></i>CTL (체력)</span><span><i style="background:var(--c-pwr)"></i>ATL (피로)</span><span><i style="background:#3a4152"></i>일일 TSS</span></div>
       <div class="chart-wrap" id="loadChart"><div class="tip"></div></div>
+    </div>
+    <div class="card" id="badgeCard" style="display:none">
+      <h3><i style="background:var(--accent)"></i>도전과제 <span id="badgeCount" style="color:var(--muted);text-transform:none;letter-spacing:0"></span></h3>
+      <div class="badges" id="badgeGrid"></div>
     </div>
     <div class="card" id="libListCard" style="display:none">
       <h3><i style="background:var(--c-elev)"></i>라이딩 갤러리</h3>
@@ -317,13 +370,18 @@
 
 <div class="overlay" id="licOverlay" role="dialog" aria-modal="true" aria-label="RideLens Pro 활성화">
   <div class="modal">
-    <h3>RideLens Pro 활성화</h3>
-    <p>PDF 리포트 · 라이딩 비교 · 훈련 부하 추적이 잠금 해제됩니다.<br>키 검증도 오프라인에서 이뤄집니다.</p>
-    <input type="text" id="licKey" placeholder="RLPRO-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false">
+    <h3 id="licTitle">RideLens Pro</h3>
+    <p id="licDesc">성장 퀘스트 · PR 추적 · 지난 라이딩 비교 · PDF 리포트 · 훈련 부하가 잠금 해제됩니다.<br>키 검증은 오프라인에서 이뤄집니다.</p>
+    <div class="plansmini">
+      <a class="planbtn" id="buyMonthly" target="_blank" rel="noopener"><b>₩1,900</b><span>월간 구독</span></a>
+      <a class="planbtn best" id="buyYearly" target="_blank" rel="noopener"><b>₩15,000</b><span>연간 · 2달 무료</span></a>
+      <a class="planbtn" id="buyLife" target="_blank" rel="noopener"><b>₩39,000</b><span>평생 소장</span></a>
+    </div>
+    <input type="text" id="licKey" placeholder="RLSUB-… 또는 RLPRO-… 키 입력" autocomplete="off" spellcheck="false">
+    <input type="email" id="licEmail" placeholder="구매 이메일 (선택 — 키 재발급·공지 대조용, 이 기기에만 저장)" autocomplete="email">
     <p id="licErr">키가 올바르지 않습니다. 구매 메일에 있는 키를 다시 확인해 주세요.</p>
     <div class="row">
       <button class="btn primary" id="btnActivate">활성화</button>
-      <a class="btn" href="mailto:hongsgo@gmail.com?subject=RideLens%20Pro%20%EA%B5%AC%EB%A7%A4">₩29,000 구매하기</a>
       <div class="grow"></div>
       <button class="btn" id="btnLicClose">닫기</button>
     </div>
@@ -569,7 +627,84 @@ function computeStats(pts, ftp){
     s.if = s.np/ftp;
     s.tss = (moving * s.np * s.if) / (ftp*3600) * 100;
   }
+  s.bests = computeBests(pts);
+  s.climb = climbSummary(detectClimbs(pts));
   return s;
+}
+
+/* ---------------- best efforts (구간 최대 평균 파워) ---------------- */
+function computeBests(pts){
+  // 1초 간격 파워 시계열로 펼친 뒤 이동 평균 최대값
+  const sec = [];
+  for (let i=1;i<pts.length;i++){
+    const p = pts[i], q = pts[i-1];
+    let dt = (p.t != null && q.t != null) ? p.t - q.t : 1;
+    if (dt <= 0) continue;
+    const w = p.pwr != null ? p.pwr : 0;
+    const fill = Math.min(dt, 3);
+    for (let k=0;k<fill;k++) sec.push(w);
+    if (dt > 3) for (let k=0, z=Math.min(dt-3, 30); k<z; k++) sec.push(0); // 긴 공백은 정지로 간주
+  }
+  const pre = new Float64Array(sec.length+1);
+  for (let i=0;i<sec.length;i++) pre[i+1] = pre[i] + sec[i];
+  const best = w => {
+    if (sec.length < w) return null;
+    let m = 0;
+    for (let i=w;i<=sec.length;i++){ const v = pre[i]-pre[i-w]; if (v > m) m = v; }
+    return Math.round(m/w);
+  };
+  return {p5:best(5), p60:best(60), p300:best(300), p1200:best(1200)};
+}
+
+/* ---------------- 업힐(클라임) 감지 ---------------- */
+function detectClimbs(pts){
+  // 50m 간격으로 리샘플 후, 정점 대비 12m 하강(또는 600m 이상 상승 정체)까지를 한 클라임으로 묶는다
+  const rs = [];
+  let next = -1;
+  for (let i=0;i<pts.length;i++){
+    const p = pts[i];
+    if (p.eleS == null || p.dist == null) continue;
+    if (p.dist >= next){ rs.push({d:p.dist, e:p.eleS, i}); next = p.dist + 50; }
+  }
+  const climbs = [];
+  if (rs.length < 5) return climbs;
+  const push = (a, b) => {
+    const gain = rs[b].e - rs[a].e, len = rs[b].d - rs[a].d;
+    if (gain < 25 || len < 250) return;
+    const g = gain/len*100;
+    if (g < 2) return;
+    let maxG = 0;
+    for (let k=a+2;k<=b;k++){
+      const dd = rs[k].d - rs[k-2].d;
+      if (dd > 0) maxG = Math.max(maxG, (rs[k].e - rs[k-2].e)/dd*100);
+    }
+    const t0 = pts[rs[a].i].t, t1 = pts[rs[b].i].t;
+    const time = (t0 != null && t1 != null && t1 > t0) ? t1 - t0 : null;
+    const score = len * g; // Strava식 클라임 스코어: 길이(m) × 평균 경사(%)
+    const cat = score>=80000?0 : score>=64000?1 : score>=32000?2 : score>=16000?3 : score>=8000?4 : 9;
+    climbs.push({startKm:rs[a].d/1000, len, gain, grade:g, maxGrade:maxG, time,
+      vam: time ? gain/time*3600 : null, score, cat});
+  };
+  let s = -1, peak = -1;
+  for (let k=1;k<rs.length;k++){
+    if (s < 0){
+      if (rs[k].e - rs[k-1].e > 0.3){ s = k-1; peak = k; }
+    } else {
+      if (rs[k].e >= rs[peak].e){ peak = k; continue; }
+      const drop = rs[peak].e - rs[k].e;
+      const flat = rs[k].d - rs[peak].d;
+      if (drop > 12 || (flat > 600 && drop > 3)){ push(s, peak); s = -1; }
+    }
+  }
+  if (s >= 0) push(s, peak);
+  return climbs;
+}
+function climbSummary(cs){
+  return { n: cs.length,
+    gain: Math.round(cs.reduce((a,c)=>a+c.gain,0)),
+    bestVam: Math.round(Math.max(0, ...cs.map(c=>c.vam||0))),
+    bestCat: Math.min(9, ...cs.map(c=>c.cat)),
+    bestScore: Math.round(Math.max(0, ...cs.map(c=>c.score||0))) };
 }
 
 function computeSplits(pts, kmStep){
@@ -595,6 +730,327 @@ function computeSplits(pts, kmStep){
     }
   }
   return splits;
+}
+
+/* ---------------- 라이더 RPG (유형·레벨·퀘스트·배지) ---------------- */
+let RIDER = null; // 공유 카드에서 사용
+const CLASSES = {
+  climber:  {name:"클라이머",  emoji:"⛰️", desc:"오르막에서 살아나는 산악 스페셜리스트"},
+  sprinter: {name:"스프린터",  emoji:"⚡", desc:"마지막 200m를 지배하는 폭발형"},
+  puncheur: {name:"펀처",      emoji:"💥", desc:"짧은 언덕과 어택에 강한 공격수"},
+  tt:       {name:"TT 머신",   emoji:"⏱️", desc:"일정한 파워로 시간을 써는 독주자"},
+  diesel:   {name:"디젤",      emoji:"🚂", desc:"멀리, 오래, 지치지 않는 장거리 엔진"},
+  allround: {name:"올라운더",  emoji:"🧭", desc:"약점 없는 오각형 라이더"},
+  rookie:   {name:"루키",      emoji:"🐣", desc:"이제 능력치를 채워 갈 신인"}
+};
+const STAT_DEF = [["sprint","스프린트"],["punch","펀치"],["sustain","지속력"],["climb","클라이밍"],["endure","지구력"]];
+const LV_TITLES = [[1,"새싹 라이더"],[3,"동네 라이더"],[5,"주말 전사"],[8,"그룹라이드 에이스"],[12,"지역 강자"],[16,"KOM 헌터"],[21,"엘리트"],[27,"그랜드투어급"],[34,"살아있는 전설"]];
+function lvTitle(lv){ let t = LV_TITLES[0][1]; for (const [l,n] of LV_TITLES) if (lv >= l) t = n; return t; }
+
+// 보관함 기록 + 현재 라이딩을 합쳐 개인 최고 기록 집계
+function aggRides(list){
+  const A = {rides:0, maxDist:0, maxGain:0, maxTime:0, maxTss:0, p5:0, p60:0, p300:0, p1200:0,
+             vam:0, bestCat:9, bestScore:0, earliest:24, weeks:{}};
+  for (const r of list){
+    const s = r.stats || {};
+    A.rides++;
+    A.maxDist = Math.max(A.maxDist, s.distance||0);
+    A.maxGain = Math.max(A.maxGain, s.gain||0);
+    A.maxTime = Math.max(A.maxTime, s.moving||0);
+    A.maxTss  = Math.max(A.maxTss,  s.tss||0);
+    const b = s.bests || (r.points ? computeBests(r.points) : {});
+    for (const k of ["p5","p60","p300","p1200"]) if (b[k]) A[k] = Math.max(A[k], b[k]);
+    const c = s.climb || (r.points ? climbSummary(detectClimbs(r.points)) : null);
+    if (c){
+      A.vam = Math.max(A.vam, c.bestVam||0);
+      A.bestCat = Math.min(A.bestCat, c.bestCat == null ? 9 : c.bestCat);
+      A.bestScore = Math.max(A.bestScore, c.bestScore||0);
+    }
+    if (s.startTime){
+      const d = new Date(s.startTime*1000);
+      A.earliest = Math.min(A.earliest, d.getHours());
+      const wk = Math.floor((s.startTime/86400 + 4)/7);
+      A.weeks[wk] = (A.weeks[wk]||0) + 1;
+    }
+  }
+  A.maxWeek = Math.max(0, ...Object.values(A.weeks));
+  return A;
+}
+
+// 능력치 0~100 (W/kg는 Coggan 파워 프로파일 스케일 근사)
+function riderScores(A, weight){
+  const w = weight || 70;
+  const cl = v => Math.max(0, Math.min(100, Math.round(v)));
+  const vamS = (A.vam - 300)/1300*100;      // VAM 300~1600 m/h
+  const gainS = A.maxGain/18;               // 획득고도 1,800m → 100
+  return {
+    sprint:  cl(((A.p5/w) - 6)/14*100),         // 5초 6~20 W/kg
+    punch:   cl(((A.p60/w) - 3.5)/7*100),       // 1분 3.5~10.5 W/kg
+    sustain: cl(((A.p1200/w)*0.95 - 1.5)/4.5*100), // 추정 FTP 1.5~6 W/kg
+    climb:   cl(Math.max(vamS, gainS*0.9)),
+    endure:  cl(Math.max((A.maxDist/1000 - 15)/185*100, (A.maxTime/3600 - 0.8)/6.2*100))
+  };
+}
+// 추정 FTP(W/kg) → 취미 라이더 백분위 근사
+const PCT_TABLE = [[1.5,4],[2.0,15],[2.5,37],[3.0,60],[3.5,79],[4.0,91],[4.5,97],[5.2,99]];
+function ftpPercentile(wkg){
+  if (!wkg || wkg <= 0) return null;
+  if (wkg <= PCT_TABLE[0][0]) return PCT_TABLE[0][1];
+  for (let i=1;i<PCT_TABLE.length;i++){
+    const [x1,y1] = PCT_TABLE[i-1], [x2,y2] = PCT_TABLE[i];
+    if (wkg <= x2) return Math.round(y1 + (wkg-x1)/(x2-x1)*(y2-y1));
+  }
+  return 99;
+}
+function riderClass(sc, A, vi){
+  if (!A.rides) return CLASSES.rookie;
+  const arr = STAT_DEF.map(([k])=>[k, sc[k]]).sort((a,b)=>b[1]-a[1]);
+  if (arr[0][1] < 15) return CLASSES.rookie;
+  if (arr[0][1] - arr[1][1] < 8 && arr[0][1] - arr[2][1] < 14) return CLASSES.allround;
+  return {sprint:CLASSES.sprinter, punch:CLASSES.puncheur, sustain:CLASSES.tt,
+          climb:CLASSES.climber, endure:CLASSES.diesel}[arr[0][0]];
+}
+
+// 특화 트리 — "어떻게 하면 이 유형으로 발전하는가"의 퀘스트 사다리
+const TRACKS = [
+  {k:"climb", name:"클라이머", emoji:"⛰️",
+   how:"긴 오르막을 끊지 않고 일정한 파워로 오르세요 — 획득고도와 VAM이 이 트리의 경험치입니다.",
+   q:[{t:"한 라이딩 획득고도 300m", g:300, u:"m", v:A=>A.maxGain},
+      {t:"한 라이딩 획득고도 800m", g:800, u:"m", v:A=>A.maxGain},
+      {t:"한 라이딩 획득고도 1,500m", g:1500, u:"m", v:A=>A.maxGain},
+      {t:"VAM 800 m/h 클라임", g:800, u:"m/h", v:A=>A.vam},
+      {t:"VAM 1,100 m/h 클라임", g:1100, u:"m/h", v:A=>A.vam},
+      {t:"클라임 스코어 32,000 (2급 클라임) 완등", g:32000, u:"", v:A=>A.bestScore}]},
+  {k:"sprint", name:"스프린터", emoji:"⚡",
+   how:"안전한 직선 구간에서 5~10초 전력 스프린트를 라이딩마다 3~5회 반복하면 5초 파워가 자랍니다.",
+   q:[{t:"5초 파워 500W", g:500, u:"W", v:A=>A.p5},
+      {t:"5초 파워 700W", g:700, u:"W", v:A=>A.p5},
+      {t:"5초 파워 900W", g:900, u:"W", v:A=>A.p5},
+      {t:"5초 파워 1,100W", g:1100, u:"W", v:A=>A.p5}]},
+  {k:"punch", name:"펀처", emoji:"💥",
+   how:"1~3분짜리 언덕을 전력으로 — 주 1회 VO₂max 인터벌(3분 전력 × 5회)이 지름길입니다.",
+   q:[{t:"1분 파워 300W", g:300, u:"W", v:A=>A.p60},
+      {t:"1분 파워 420W", g:420, u:"W", v:A=>A.p60},
+      {t:"1분 파워 540W", g:540, u:"W", v:A=>A.p60},
+      {t:"1분 파워 660W", g:660, u:"W", v:A=>A.p60}]},
+  {k:"sustain", name:"TT 머신", emoji:"⏱️",
+   how:"20분을 끊기지 않는 일정 파워로 — 스윗스팟(FTP의 88~94%) 인터벌이 이 트리의 경험치입니다.",
+   q:[{t:"20분 파워 150W", g:150, u:"W", v:A=>A.p1200},
+      {t:"20분 파워 200W", g:200, u:"W", v:A=>A.p1200},
+      {t:"20분 파워 250W", g:250, u:"W", v:A=>A.p1200},
+      {t:"20분 파워 300W", g:300, u:"W", v:A=>A.p1200}]},
+  {k:"endure", name:"디젤", emoji:"🚂",
+   how:"2주에 한 번, 지금까지 가장 길었던 라이딩보다 20% 길게 — 거리가 곧 경험치입니다.",
+   q:[{t:"한 번에 50km", g:50, u:"km", v:A=>A.maxDist/1000},
+      {t:"한 번에 100km", g:100, u:"km", v:A=>A.maxDist/1000},
+      {t:"한 번에 160km (센추리)", g:160, u:"km", v:A=>A.maxDist/1000},
+      {t:"한 번에 200km", g:200, u:"km", v:A=>A.maxDist/1000}]}
+];
+function trackHtml(A){
+  return TRACKS.map(tr=>{
+    const done = tr.q.filter(q=>q.v(A) >= q.g).length;
+    const next = tr.q.find(q=>q.v(A) < q.g);
+    const pips = tr.q.map(q=>q.v(A) >= q.g ? "●" : "○").join("");
+    const body = next
+      ? `<div class="t-next">다음 퀘스트 — <b>${next.t}</b> (현재 ${fmt.n0(next.v(A))}${next.u} / 목표 ${fmt.n0(next.g)}${next.u})</div>
+         <div class="t-prog"><i style="width:${Math.min(100, next.v(A)/next.g*100).toFixed(0)}%"></i></div>
+         <div class="t-how">${tr.how}</div>`
+      : `<div class="t-next">트리 마스터 — 모든 퀘스트 달성 🎉</div>`;
+    return `<div class="track"><div class="t-top"><span>${tr.emoji}</span>${tr.name} 트리 · Lv.${done}<span class="pips">${pips}</span></div>${body}</div>`;
+  }).join("");
+}
+
+function radarSvg(sc, prev){
+  const cx=130, cy=112, R=76;
+  const pt = (i, r) => {
+    const a = -Math.PI/2 + i*2*Math.PI/5;
+    return [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+  };
+  let rings = "", spokes = "", labels = "";
+  for (const f of [.25,.5,.75,1])
+    rings += `<polygon points="${STAT_DEF.map((_,i)=>pt(i,R*f).map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--grid)"/>`;
+  STAT_DEF.forEach(([k,name],i)=>{
+    const [x,y] = pt(i,R);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--grid)"/>`;
+    const [lx,ly] = pt(i, R+24);
+    labels += `<text x="${lx.toFixed(1)}" y="${(ly+2).toFixed(1)}" text-anchor="middle" font-size="11" fill="var(--ink2)">${name}</text>
+               <text x="${lx.toFixed(1)}" y="${(ly+15).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink)" style="font-variant-numeric:tabular-nums">${sc[k]}</text>`;
+  });
+  const poly = s => STAT_DEF.map(([k],i)=>pt(i, R*Math.max(s[k],4)/100).map(v=>v.toFixed(1)).join(",")).join(" ");
+  const prevP = prev ? `<polygon points="${poly(prev)}" fill="rgba(122,128,144,.14)" stroke="#7a8090" stroke-width="1.2" stroke-dasharray="4 3"/>` : "";
+  return `<svg viewBox="0 0 260 236" role="img" aria-label="라이더 능력치 차트">${rings}${spokes}${prevP}
+    <polygon points="${poly(sc)}" fill="rgba(240,166,58,.22)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>${labels}</svg>`;
+}
+
+// 현재 라이딩과 같은 시각의 보관함 기록 제외(자기 자신과 비교 방지)
+function otherRides(rides, s){
+  return rides.filter(r => !s.startTime || Math.abs(((r.stats && r.stats.startTime)||0) - s.startTime) > 60);
+}
+
+async function renderRiderCard(s){
+  const holder = document.getElementById("riderCard");
+  let rides = [];
+  try{ rides = await dbAll(); }catch(e){}
+  const others = otherRides(rides, s);
+  const pr = getProfile();
+  const A = aggRides(others.map(r=>({stats:r.stats||{}, points:r.points})).concat([{stats:s}]));
+  const sc = riderScores(A, pr.weight);
+  const vi = (s.np && s.avgPwr) ? s.np/s.avgPwr : null;
+  const cls = riderClass(sc, A, vi);
+  const totXp = others.reduce((a,r)=>a+rideXp(r.stats||{}), 0) + rideXp(s);
+  const lv = Math.floor(Math.sqrt(totXp/300)) + 1;
+  const base = 300*(lv-1)**2, nextXp = 300*lv**2;
+  const prog = Math.max(2, Math.min(100, (totXp-base)/(nextXp-base)*100));
+  const ftpWkg = A.p1200 ? (A.p1200*0.95)/(pr.weight||70) : null;
+  const pct = ftpPercentile(ftpWkg);
+  RIDER = {cls, lv, title: lvTitle(lv)};
+  let prevSc = null;
+  if (isPro()){
+    const cutoff = Date.now() - 30*86400000;
+    const old = others.filter(r=>(r.date||0) < cutoff);
+    if (old.length) prevSc = riderScores(aggRides(old.map(r=>({stats:r.stats||{}, points:r.points}))), pr.weight);
+  }
+  const estNote = (DATA && DATA.est) ? " · 파워미터 없이 물리 모델로 추정" : "";
+  const baseNote = prevSc
+    ? "회색 점선 = 30일 전 능력치. 색칠된 면적이 점선보다 넓어질수록 성장한 것입니다."
+    : (isPro()
+        ? "30일 이상 기록이 쌓이면 이 차트에 과거 능력치가 겹쳐져 성장이 보입니다."
+        : `보관함 ${others.length}개 + 이번 라이딩으로 계산 — 저장할수록 정확해집니다.`);
+  holder.innerHTML = `<div class="card">
+    <h3><i style="background:var(--accent)"></i>라이더 카드</h3>
+    <div class="rider">
+      <div>
+        <div class="rc-head">
+          <div class="rc-ava">${cls.emoji}</div>
+          <div><div class="rc-cls">${cls.name}</div><div class="rc-desc">${cls.desc}</div></div>
+        </div>
+        <div class="rc-lv"><span>Lv.${lv} · <b style="color:var(--ink)">${lvTitle(lv)}</b></span><span>${fmt.n0(totXp)} / ${fmt.n0(nextXp)} XP</span></div>
+        <div class="xpbar"><i style="width:${prog.toFixed(0)}%"></i></div>
+        ${pct != null ? `<div class="rc-pct">추정 FTP <b>${ftpWkg.toFixed(1)} W/kg</b> — 취미 라이더 <b style="color:var(--accent)">상위 ${Math.max(1, 100-pct)}%</b> 수준${estNote}</div>` : ""}
+        <div class="rc-pct">${baseNote}</div>
+      </div>
+      <div>${radarSvg(sc, prevSc)}</div>
+    </div>
+    <h3 style="margin-top:14px"><i style="background:var(--c-speed)"></i>성장 퀘스트</h3>
+    ${isPro()
+      ? `<div class="tracks">${trackHtml(A)}</div>`
+      : `<div class="locked-box">
+           <div class="blur"><div class="tracks">${trackHtml(A)}</div></div>
+           <div class="cta">
+             <b style="color:var(--accent);font-size:14px">성장 퀘스트는 Pro에서 열립니다</b>
+             <span style="font-size:12px;color:var(--ink2)">트리별 다음 퀘스트 가이드 · 달성 자동 추적 · 30일 성장 비교 · PR 알림</span>
+             <button class="btn primary sm" onclick="openLic()">월 ₩1,900부터 — 잠금 해제</button>
+           </div>
+         </div>`}
+  </div>`;
+}
+
+async function renderGrowth(s){
+  const holder = document.getElementById("growthCard");
+  holder.innerHTML = "";
+  let rides = [];
+  try{ rides = await dbAll(); }catch(e){}
+  const others = otherRides(rides, s);
+  if (!others.length) return;
+  if (!isPro()){
+    holder.innerHTML = `<div class="card"><h3><i style="background:var(--accent)"></i>성장 리포트<span class="lock">PRO</span></h3>
+      <div class="locked-box">
+        <div class="blur"><div class="chips">
+          <span class="chip pr">🏆 PR — 20분 파워 245 W</span>
+          <span class="chip up">평균 속도 <b>▲ 1.3 km/h</b></span>
+          <span class="chip up">TSS <b>▲ 18</b></span>
+          <span class="chip down">획득고도 <b>▼ 120 m</b></span>
+        </div></div>
+        <div class="cta" style="flex-direction:row;gap:12px">
+          <span style="font-size:12.5px;color:var(--ink2)">PR 갱신 확인 · 지난 라이딩 대비는 <b style="color:var(--accent)">Pro</b></span>
+          <button class="btn primary sm" onclick="openLic()">잠금 해제</button>
+        </div>
+      </div></div>`;
+    return;
+  }
+  const A = aggRides(others.map(r=>({stats:r.stats||{}, points:r.points})));
+  const b = s.bests || {};
+  const prs = [];
+  if (s.distance > A.maxDist) prs.push(`최장 거리 ${fmt.km(s.distance)} km`);
+  if ((s.gain||0) > A.maxGain && s.gain > 50) prs.push(`최대 획득고도 ${fmt.n0(s.gain)} m`);
+  const PW = {p5:"5초 파워", p60:"1분 파워", p300:"5분 파워", p1200:"20분 파워"};
+  for (const k in PW) if (b[k] && b[k] > (A[k]||0)) prs.push(`${PW[k]} ${fmt.n0(b[k])} W`);
+  const c = s.climb || {};
+  if (c.bestVam && c.bestVam > A.vam) prs.push(`VAM ${fmt.n0(c.bestVam)} m/h`);
+  const last = others.slice().sort((x,y)=>(y.date||0)-(x.date||0))[0];
+  const ls = last.stats || {};
+  const dchip = (label, cur, prev, f, unit) => {
+    if (cur == null || prev == null) return "";
+    const d = cur - prev;
+    if (!d) return "";
+    return `<span class="chip ${d>0?"up":"down"}">${label} <b>${d>0?"▲":"▼"} ${f(Math.abs(d))}${unit}</b></span>`;
+  };
+  const prHtml = prs.length
+    ? prs.map(p=>`<span class="chip pr">🏆 PR — ${p}</span>`).join("")
+    : `<span class="chip">이번엔 신기록 없음 — 다음 라이딩을 노려보세요</span>`;
+  holder.innerHTML = `<div class="card"><h3><i style="background:var(--accent)"></i>성장 리포트</h3>
+    <div class="chips">${prHtml}</div>
+    <div style="font-size:11.5px;color:var(--muted);margin:2px 0 0">지난 라이딩 — ${esc(last.name)} (${new Date(last.date).toLocaleDateString("ko-KR")}) 대비</div>
+    <div class="chips">
+      ${dchip("거리", s.distance/1000, (ls.distance||0)/1000, v=>v.toFixed(1), " km")}
+      ${dchip("평균 속도", s.avgSpd!=null?s.avgSpd*3.6:null, ls.avgSpd!=null?ls.avgSpd*3.6:null, v=>v.toFixed(1), " km/h")}
+      ${dchip("NP", s.np, ls.np, v=>Math.round(v), " W")}
+      ${dchip("TSS", s.tss, ls.tss, v=>Math.round(v), "")}
+      ${dchip("획득고도", s.gain, ls.gain, v=>Math.round(v), " m")}
+    </div></div>`;
+}
+
+const CAT_LABEL = {0:["HC","#a63bd0"], 1:["1급","#d03b3b"], 2:["2급","#e07f28"], 3:["3급","#c9a51f"], 4:["4급","#3987e5"], 9:["–","#3a4152"]};
+function renderClimbs(pts){
+  const holder = document.getElementById("climbCard");
+  const cs = detectClimbs(pts);
+  if (!cs.length){ holder.innerHTML = ""; return; }
+  const rows = cs.map(c=>{
+    const [lb, col] = CAT_LABEL[c.cat];
+    return `<tr><td><span class="catb" style="background:${col}">${lb}</span></td>
+      <td>${c.startKm.toFixed(1)} km</td>
+      <td>${(c.len/1000).toFixed(1)} km</td>
+      <td>${fmt.n0(c.gain)} m</td>
+      <td>${c.grade.toFixed(1)}%</td>
+      <td>${c.maxGrade.toFixed(1)}%</td>
+      <td>${fmt.dur(c.time)}</td>
+      <td>${c.vam!=null?fmt.n0(c.vam):"–"}</td></tr>`;
+  }).join("");
+  holder.innerHTML = `<div class="card"><h3><i style="background:var(--accent)"></i>업힐 구간 ${cs.length}개 · 상승 ${fmt.n0(cs.reduce((a,c)=>a+c.gain,0))} m</h3>
+    <div class="splits"><table>
+      <tr><th style="text-align:left">등급</th><th>시작</th><th>길이</th><th>상승</th><th>평균 경사</th><th>최대 경사</th><th>시간</th><th>VAM</th></tr>
+      ${rows}</table></div>
+    <p style="font-size:11px;color:var(--muted);margin:8px 0 4px">등급 = 길이 × 평균 경사 기반 클라임 스코어 (투르 드 프랑스 방식 근사) · VAM = 시간당 수직 상승(m/h)</p>
+  </div>`;
+}
+
+/* ---------------- 도전과제 배지 ---------------- */
+const BADGES = [
+  {e:"🚴", t:"첫 발자국",   d:"첫 라이딩 저장",        f:A=>A.rides>=1},
+  {e:"📚", t:"수집가",      d:"라이딩 10개 보관",       f:A=>A.rides>=10},
+  {e:"🛣️", t:"하프 센추리", d:"한 번에 50 km",         f:A=>A.maxDist>=50000},
+  {e:"💯", t:"센추리",      d:"한 번에 100 km",        f:A=>A.maxDist>=100000},
+  {e:"🌏", t:"울트라",      d:"한 번에 200 km",        f:A=>A.maxDist>=200000},
+  {e:"⛰️", t:"천고지",      d:"한 라이딩 획득고도 1,000 m", f:A=>A.maxGain>=1000},
+  {e:"🏔️", t:"이천고지",    d:"한 라이딩 획득고도 2,000 m", f:A=>A.maxGain>=2000},
+  {e:"⚡", t:"인간 번개",   d:"5초 파워 700 W",        f:A=>A.p5>=700},
+  {e:"⏱️", t:"엔진 점화",   d:"20분 파워 250 W",       f:A=>A.p1200>=250},
+  {e:"🥵", t:"고통의 미학", d:"TSS 200 라이딩",        f:A=>A.maxTss>=200},
+  {e:"🌅", t:"새벽 기사",   d:"오전 6시 전 출발",       f:A=>A.earliest<6},
+  {e:"🔥", t:"꾸준함",      d:"한 주에 3회 라이딩",     f:A=>A.maxWeek>=3}
+];
+function renderBadges(rides){
+  const card = document.getElementById("badgeCard");
+  if (!rides.length){ card.style.display = "none"; return; }
+  card.style.display = "";
+  const A = aggRides(rides.map(r=>({stats:r.stats||{}, points:r.points})));
+  const got = BADGES.filter(b=>b.f(A)).length;
+  document.getElementById("badgeCount").textContent = `${got} / ${BADGES.length} 달성`;
+  document.getElementById("badgeGrid").innerHTML = BADGES.map(b=>{
+    const on = b.f(A);
+    return `<div class="badge${on?"":" off"}" title="${b.d}"><div class="be">${on?b.e:"🔒"}</div>
+      <div><div class="bt">${b.t}</div><div class="bd">${b.d}</div></div></div>`;
+  }).join("");
 }
 
 /* ---------------- formatting ---------------- */
@@ -856,6 +1312,9 @@ function renderReport(pts, name, est){
   document.getElementById("splitTable").innerHTML = thead + rows;
 
   drawMap(pts);
+  renderClimbs(pts);
+  renderRiderCard(s);
+  renderGrowth(s);
 }
 
 /* ---------------- demo ride generator ---------------- */
@@ -905,24 +1364,56 @@ function showView(v){
   document.getElementById("compare").style.display = v==="compare" ? "block" : "none";
 }
 
-/* ---------------- license (offline) ---------------- */
+/* ---------------- license (offline, 평생 RLPRO + 구독 RLSUB) ---------------- */
 const LIC_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function keyValid(k){
-  const m = (k||"").trim().toUpperCase().match(/^RLPRO-([A-Z2-9]{5})-([A-Z2-9]{5})-([A-Z2-9]{5})$/);
-  if (!m) return false;
-  const s = m[1]+m[2]+m[3];
+const SUB_EPOCH = Date.UTC(2026, 0, 1); // RLSUB 만료일 기준일
+// TODO: 배포 시 실제 Lemon Squeezy 상품 URL로 교체
+const CHECKOUT = {
+  monthly: "https://ridelens.lemonsqueezy.com/buy/monthly",
+  yearly:  "https://ridelens.lemonsqueezy.com/buy/yearly",
+  life:    "https://ridelens.lemonsqueezy.com/buy/lifetime"
+};
+function keyInfo(k){
+  k = (k||"").trim().toUpperCase();
+  const m = k.match(/^(RLPRO|RLSUB)-([A-Z2-9]{5})-([A-Z2-9]{5})-([A-Z2-9]{5})$/);
+  if (!m) return null;
+  const s = m[2]+m[3]+m[4];
   let sum = 7;
   for (const ch of s.slice(0,14)) sum = (sum*31 + LIC_ALPHA.indexOf(ch) + 1) % 1024;
-  return LIC_ALPHA[sum % 32] === s[14];
+  if (LIC_ALPHA[sum % 32] !== s[14]) return null;
+  if (m[1] === "RLPRO") return {plan:"life", expiry:null};
+  let days = 0;
+  for (const ch of s.slice(0,4)) days = days*32 + LIC_ALPHA.indexOf(ch); // 앞 4자에 만료일 내장
+  return {plan:"sub", expiry: SUB_EPOCH + days*86400000};
 }
-function isPro(){ try{ return keyValid(localStorage.getItem("ridelens_license")); }catch(e){ return false; } }
+function proInfo(){ try{ return keyInfo(localStorage.getItem("ridelens_license")); }catch(e){ return null; } }
+function isPro(){ const i = proInfo(); return !!i && (i.plan === "life" || i.expiry >= Date.now()); }
+function proExpired(){ const i = proInfo(); return !!i && i.plan === "sub" && i.expiry < Date.now(); }
 function applyProUi(){
-  const pro = isPro();
-  document.getElementById("proBadge").hidden = !pro;
+  const info = proInfo(), pro = isPro();
+  const badge = document.getElementById("proBadge");
+  badge.hidden = !info;
+  if (info){
+    if (info.plan === "life"){ badge.textContent = "PRO"; badge.title = "평생 라이선스"; }
+    else if (pro){
+      const d = Math.ceil((info.expiry - Date.now())/86400000);
+      badge.textContent = d <= 14 ? `PRO D-${d}` : "PRO";
+      badge.title = "구독 만료일: " + new Date(info.expiry).toLocaleDateString("ko-KR");
+    } else { badge.textContent = "PRO 만료"; badge.title = "구독이 만료되었습니다 — 갱신하면 성장 기록이 이어집니다"; }
+  }
   document.querySelector(".pro").style.display = pro ? "none" : "";
   document.querySelectorAll(".ride-actions .lock, .lib-actions .lock").forEach(el=>{ el.style.display = pro ? "none" : ""; });
 }
-function openLic(){ document.getElementById("licOverlay").classList.add("open"); document.getElementById("licKey").focus(); }
+function openLic(){
+  const exp = proExpired();
+  document.getElementById("licTitle").textContent = exp ? "구독이 만료되었습니다" : "RideLens Pro";
+  document.getElementById("licDesc").innerHTML = exp
+    ? "갱신하면 성장 퀘스트·PR 추적·훈련 부하가 다시 열리고, 쌓아 둔 기록은 그대로 이어집니다."
+    : "성장 퀘스트 · PR 추적 · 지난 라이딩 비교 · PDF 리포트 · 훈련 부하가 잠금 해제됩니다.<br>키 검증은 오프라인에서 이뤄집니다.";
+  try{ const em = localStorage.getItem("ridelens_email"); if (em) document.getElementById("licEmail").value = em; }catch(e){}
+  document.getElementById("licOverlay").classList.add("open");
+  document.getElementById("licKey").focus();
+}
 function closeLic(){ document.getElementById("licOverlay").classList.remove("open"); document.getElementById("licErr").style.display="none"; }
 
 /* ---------------- profile & equipment ---------------- */
@@ -1055,6 +1546,7 @@ async function showLibrary(){
   document.getElementById("libEmpty").style.display = LIB_CACHE.length ? "none" : "";
   document.getElementById("libListCard").style.display = LIB_CACHE.length ? "" : "none";
   document.getElementById("loadCard").style.display = LIB_CACHE.length ? "" : "none";
+  renderBadges(LIB_CACHE);
   if (!LIB_CACHE.length) return;
   renderGallery();
   renderLoadChart(LIB_CACHE);
@@ -1411,6 +1903,10 @@ function drawShareCard(){
   const dt = s.startTime ? new Date(s.startTime*1000) : new Date();
   ctx.font = `400 32px ${F}`; ctx.fillStyle = "#a7adba";
   ctx.fillText(dt.toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"short"}), 72, 336);
+  if (RIDER){
+    ctx.font = `700 33px ${F}`; ctx.fillStyle = "#f0a63a";
+    ctx.fillText(`${RIDER.cls.emoji} ${RIDER.cls.name} · Lv.${RIDER.lv} ${RIDER.title}`, 72, 388);
+  }
   // stat grid 2x3
   const cells = [
     ["거리", fmt.km(s.distance), "km"],
@@ -1638,15 +2134,29 @@ document.getElementById("gallery").addEventListener("click", async e=>{
 document.getElementById("libSearch").addEventListener("input", renderGallery);
 document.getElementById("libSort").addEventListener("change", renderGallery);
 
+document.getElementById("buyMonthly").href = CHECKOUT.monthly;
+document.getElementById("buyYearly").href = CHECKOUT.yearly;
+document.getElementById("buyLife").href = CHECKOUT.life;
 document.getElementById("btnActivate").addEventListener("click", ()=>{
   const k = document.getElementById("licKey").value;
-  if (keyValid(k)){
-    try{ localStorage.setItem("ridelens_license", k.trim().toUpperCase()); }catch(e){}
-    closeLic(); applyProUi();
-    if (document.getElementById("library").style.display !== "none") showLibrary();
-  } else {
-    document.getElementById("licErr").style.display = "block";
+  const info = keyInfo(k);
+  const err = document.getElementById("licErr");
+  if (!info){
+    err.textContent = "키가 올바르지 않습니다. 구매 메일에 있는 키를 다시 확인해 주세요.";
+    err.style.display = "block"; return;
   }
+  if (info.plan === "sub" && info.expiry < Date.now()){
+    err.textContent = "이 구독 키는 " + new Date(info.expiry).toLocaleDateString("ko-KR") + "에 만료되었습니다. 구독을 갱신해 주세요.";
+    err.style.display = "block"; return;
+  }
+  try{
+    localStorage.setItem("ridelens_license", k.trim().toUpperCase());
+    const em = document.getElementById("licEmail").value.trim();
+    if (em) localStorage.setItem("ridelens_email", em);
+  }catch(e){}
+  closeLic(); applyProUi();
+  if (document.getElementById("library").style.display !== "none") showLibrary();
+  if (DATA && document.getElementById("report").style.display !== "none") renderReport(DATA.pts, DATA.name, DATA.est);
 });
 document.getElementById("licKey").addEventListener("keydown", e=>{ if (e.key === "Enter") document.getElementById("btnActivate").click(); });
 document.getElementById("btnLicClose").addEventListener("click", closeLic);
@@ -1668,5 +2178,6 @@ window.addEventListener("resize", ()=>{
   }, 150);
 });
 </script>
+
 </body>
 </html>
