@@ -140,7 +140,12 @@
           <li>여러 라이딩 겹쳐 비교 · PDF 리포트</li>
           <li>훈련 부하(CTL/ATL/TSB) 추적</li>
         </ul>
-        <a class="btn hot" href="https://ridelens-app.lemonsqueezy.com/checkout/buy/88062e35-c81d-407a-8de0-38a607f0da32" target="_blank" rel="noopener">Pro 시작하기</a>
+        <a class="btn hot" href="https://ridelens-app.lemonsqueezy.com/checkout/buy/88062e35-c81d-407a-8de0-38a607f0da32" target="_blank" rel="noopener">연간 $10.99로 시작 — 2달 무료</a>
+        <div class="per" style="margin-top:10px">
+          다른 플랜:
+          <a href="https://ridelens-app.lemonsqueezy.com/checkout/buy/f2d43c85-1c32-44cd-b09d-d66b39490eea" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">월간 $1.49</a> ·
+          <a href="https://ridelens-app.lemonsqueezy.com/checkout/buy/f0b965df-0bc1-4f2a-8b69-6719966cfd5c" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">평생 소장 $28.99</a>
+        </div>
       </div>
     </div>
   </div>
@@ -187,7 +192,7 @@
       <h2>RideLens와 함께할 브랜드를 찾습니다</h2>
       <p>매주 라이딩 데이터를 분석하러 돌아오는 진성 라이더에게 닿는 자리입니다.
       추적 스크립트 없는 <b>고정 협찬 배너</b>만 받습니다 — 자전거 샵 · 용품 · 이벤트 · 팀 스폰서십 환영.</p>
-      <p><a class="btn" href="mailto:hongsgo@gmail.com?subject=RideLens%20협찬%20문의">협찬 문의하기</a></p>
+      <p><a class="btn mailme" data-subject="RideLens 협찬 문의" href="#">협찬 문의하기</a></p>
     </div>
   </div>
 </section>
@@ -202,11 +207,11 @@
 <footer>
   <div class="wrap">
     <span>© 2026 RideLens · 모든 분석은 당신의 기기 안에서.</span>
-    <span><a href="mailto:hongsgo@gmail.com">hongsgo@gmail.com</a></span>
+    <span><a class="mailme" data-show="1" href="#">문의 메일</a></span>
   </div>
 </footer>
 
-<script>!function(){const t=document.getElementById("ridge");if(!t||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const e=t.getContext("2d");let n=0,o=null;function i(){n=t.width=innerWidth}i(),addEventListener("resize",i);const r=340;function a(t){return.42*Math.sin(.0032*t)+.25*Math.sin(.0071*t+1.7)+.14*Math.sin(.017*t+.4)}requestAnimationFrame(function t(i){null===o&&(o=i);const l=Math.min(1,(i-o)/2600),c=1-Math.pow(1-l,3);e.clearRect(0,0,n,r);const s=n*c;e.beginPath();for(let t=0;t<=s;t+=4){const n=210.8-110*a(t);t?e.lineTo(t,n):e.moveTo(t,n)}e.strokeStyle="rgba(240,166,58,.55)",e.lineWidth=1.6,e.stroke(),e.lineTo(s,r),e.lineTo(0,r),e.closePath();const d=e.createLinearGradient(0,68,0,r);d.addColorStop(0,"rgba(240,166,58,.10)"),d.addColorStop(1,"rgba(240,166,58,0)"),e.fillStyle=d,e.fill(),l<1&&requestAnimationFrame(t)})}();</script>
+<script>!function(){const t=["hong","sgo"].join(""),e=["gmail","com"].join(".");document.querySelectorAll(".mailme").forEach(n=>{const o=t+"@"+e;n.href="mailto:"+o+(n.dataset.subject?"?subject="+encodeURIComponent(n.dataset.subject):""),n.dataset.show&&(n.textContent=o)})}(),function(){const t=document.getElementById("ridge");if(!t||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const e=t.getContext("2d");let n=0,o=null;function i(){n=t.width=innerWidth}i(),addEventListener("resize",i);const a=340;function r(t){return.42*Math.sin(.0032*t)+.25*Math.sin(.0071*t+1.7)+.14*Math.sin(.017*t+.4)}requestAnimationFrame(function t(i){null===o&&(o=i);const c=Math.min(1,(i-o)/2600),s=1-Math.pow(1-c,3);e.clearRect(0,0,n,a);const l=n*s;e.beginPath();for(let t=0;t<=l;t+=4){const n=210.8-110*r(t);t?e.lineTo(t,n):e.moveTo(t,n)}e.strokeStyle="rgba(240,166,58,.55)",e.lineWidth=1.6,e.stroke(),e.lineTo(l,a),e.lineTo(0,a),e.closePath();const d=e.createLinearGradient(0,68,0,a);d.addColorStop(0,"rgba(240,166,58,.10)"),d.addColorStop(1,"rgba(240,166,58,0)"),e.fillStyle=d,e.fill(),c<1&&requestAnimationFrame(t)})}();</script>
 
 </body>
 </html>
