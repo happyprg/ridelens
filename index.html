@@ -7,6 +7,7 @@
 <meta name="description" content="FIT/GPX 파일을 업로드 없이 브라우저에서 바로 분석하는 라이딩 분석 웹앱 — 라이더 RPG·업힐 등급·성장 추적">
 </head>
 <body>
+<title>RideLens — 업로드 없는 라이딩 분석</title>
 <style>
   :root{
     --night:#0b0e15; --panel:#121620; --panel2:#181d29; --edge:rgba(255,255,255,.08);
@@ -208,7 +209,7 @@
         <tr><th></th><th class="col-rl">RideLens</th><th>클라우드 분석 서비스</th></tr>
         <tr><td>파일 서버 전송</td><td class="yes">없음</td><td class="no">필수</td></tr>
         <tr><td>계정 가입</td><td class="yes">불필요</td><td class="no">필수</td></tr>
-        <tr><td>가격</td><td class="yes">기본 무료 · Pro 월 ₩1,900</td><td class="no">월 8,000~25,000원</td></tr>
+        <tr><td>가격</td><td class="yes">기본 무료 · Pro 월 $1.49(약 ₩2,000)</td><td class="no">월 8,000~25,000원</td></tr>
         <tr><td>오프라인 분석</td><td class="yes">가능</td><td class="no">불가</td></tr>
         <tr><td>분석까지 걸리는 시간</td><td class="yes">약 3초</td><td class="no">업로드 + 동기화 대기</td></tr>
       </table>
@@ -221,7 +222,7 @@
     <div class="sec-head">
       <div class="k">가격</div>
       <h2>기본은 무료, Pro는 커피 한 잔 값.</h2>
-      <p>분석은 영원히 무료입니다. 게임처럼 성장을 쌓고 싶어지면 월 ₩1,900 —
+      <p>분석은 영원히 무료입니다. 게임처럼 성장을 쌓고 싶어지면 월 $1.49(약 ₩2,000) —
       언제든 해지할 수 있고, 구독이 싫다면 평생 소장 옵션도 있습니다.</p>
     </div>
     <div class="plans">
@@ -241,8 +242,8 @@
       </div>
       <div class="plan pro">
         <div class="name">Pro</div>
-        <div class="price">₩1,900 <small>/월</small></div>
-        <div class="per">연 ₩15,000 (2달 무료) · 평생 ₩39,000 · 기기 3대</div>
+        <div class="price">$1.49 <small>/월</small></div>
+        <div class="per">연 $10.99 (2달 무료) · 평생 $28.99 · 기기 3대 · USD 청구</div>
         <ul>
           <li>Free의 모든 기능</li>
           <li>성장 퀘스트 — 트리별 다음 목표와 달성 자동 추적</li>
@@ -252,7 +253,7 @@
           <li>훈련 부하(CTL/ATL/TSB) 추적</li>
         </ul>
         <!-- TODO: 배포 시 실제 Lemon Squeezy 상품 URL로 교체 -->
-        <a class="btn hot" href="https://ridelens.lemonsqueezy.com/buy/yearly" target="_blank" rel="noopener">Pro 시작하기</a>
+        <a class="btn hot" href="https://ridelens-app.lemonsqueezy.com/buy/yearly" target="_blank" rel="noopener">Pro 시작하기</a>
       </div>
     </div>
   </div>
@@ -287,7 +288,7 @@
       <summary>구독은 어떻게 해지하나요? 해지하면 기록이 사라지나요?</summary>
       <p>결제 영수증 메일의 관리 링크에서 클릭 한 번으로 해지됩니다. 해지해도 무료 기능과
       보관함의 라이딩 기록·레벨·배지는 전부 그대로 남습니다 — 데이터는 원래 당신 기기에만 있으니까요.
-      구독 자체가 싫다면 평생 소장(₩39,000)을 선택하세요.</p>
+      구독 자체가 싫다면 평생 소장($28.99)을 선택하세요.</p>
     </details>
   </div>
 </section>
@@ -306,40 +307,7 @@
   </div>
 </footer>
 
-<script>
-(function(){
-  const cv = document.getElementById("ridge");
-  if (!cv || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const ctx = cv.getContext("2d");
-  let w = 0, t0 = null;
-  function size(){ w = cv.width = innerWidth; }
-  size(); addEventListener("resize", size);
-  const H = 340;
-  function prof(x){
-    return 0.42*Math.sin(x*0.0032) + 0.25*Math.sin(x*0.0071+1.7) + 0.14*Math.sin(x*0.017+0.4);
-  }
-  function frame(ts){
-    if (t0 === null) t0 = ts;
-    const p = Math.min(1, (ts-t0)/2600);
-    const ease = 1-Math.pow(1-p, 3);
-    ctx.clearRect(0,0,w,H);
-    const upto = w*ease;
-    ctx.beginPath();
-    for (let x=0; x<=upto; x+=4){
-      const y = H*0.62 - prof(x)*110;
-      x ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-    }
-    ctx.strokeStyle = "rgba(240,166,58,.55)";
-    ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.lineTo(upto, H); ctx.lineTo(0, H); ctx.closePath();
-    const g = ctx.createLinearGradient(0, H*0.2, 0, H);
-    g.addColorStop(0, "rgba(240,166,58,.10)"); g.addColorStop(1, "rgba(240,166,58,0)");
-    ctx.fillStyle = g; ctx.fill();
-    if (p < 1) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
-</script>
+<script>!function(){const t=document.getElementById("ridge");if(!t||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const e=t.getContext("2d");let n=0,o=null;function i(){n=t.width=innerWidth}i(),addEventListener("resize",i);const r=340;function a(t){return.42*Math.sin(.0032*t)+.25*Math.sin(.0071*t+1.7)+.14*Math.sin(.017*t+.4)}requestAnimationFrame(function t(i){null===o&&(o=i);const l=Math.min(1,(i-o)/2600),c=1-Math.pow(1-l,3);e.clearRect(0,0,n,r);const s=n*c;e.beginPath();for(let t=0;t<=s;t+=4){const n=210.8-110*a(t);t?e.lineTo(t,n):e.moveTo(t,n)}e.strokeStyle="rgba(240,166,58,.55)",e.lineWidth=1.6,e.stroke(),e.lineTo(s,r),e.lineTo(0,r),e.closePath();const d=e.createLinearGradient(0,68,0,r);d.addColorStop(0,"rgba(240,166,58,.10)"),d.addColorStop(1,"rgba(240,166,58,0)"),e.fillStyle=d,e.fill(),l<1&&requestAnimationFrame(t)})}();</script>
 
 </body>
 </html>
