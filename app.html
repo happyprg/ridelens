@@ -412,15 +412,18 @@
     </div>
 
     <div style="margin:16px 0 4px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600">🔗 웹 링크 공유 — 친구에게 분석 리포트 통째로</div>
-    <div class="row" style="margin-top:4px">
-      <button class="btn" id="btnShareLink" style="background:linear-gradient(135deg,#1a3a5c,#1e2a3d);color:var(--ink);border:1px solid rgba(57,135,229,.35)">🔗 서버 링크 <span style="font-size:12.5px;color:var(--muted);margin-left:2px">30일</span></button>
-      <button class="btn" id="btnShareHash" style="background:linear-gradient(135deg,#2a1f3d,#1e2a3d);color:var(--ink);border:1px solid rgba(144,133,233,.35)">📦 오프라인 링크 <span style="font-size:12.5px;color:var(--muted);margin-left:2px">영구</span></button>
+    <!-- 버튼과 설명을 세로 한 묶음으로 — 좁은 화면에서 버튼이 줄바꿈돼도 설명이 자기 버튼 밑에 붙어 다닌다 -->
+    <div class="row" style="margin-top:4px;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="btn" id="btnShareLink" style="background:linear-gradient(135deg,#1a3a5c,#1e2a3d);color:var(--ink);border:1px solid rgba(57,135,229,.35)">🔗 서버 링크 <span style="font-size:12.5px;color:var(--muted);margin-left:2px">30일</span></button>
+        <span style="font-size:12.5px;color:var(--muted);line-height:1.45;max-width:180px;word-break:keep-all">짧은 주소 · 30일 후 자동 삭제</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="btn" id="btnShareHash" style="background:linear-gradient(135deg,#2a1f3d,#1e2a3d);color:var(--ink);border:1px solid rgba(144,133,233,.35)">📦 오프라인 링크 <span style="font-size:12.5px;color:var(--muted);margin-left:2px">영구</span></button>
+        <span style="font-size:12.5px;color:var(--muted);line-height:1.45;max-width:180px;word-break:keep-all">서버 저장 없음 · 평생 유효 · 주소 김</span>
+      </div>
       <div class="grow"></div>
       <button class="btn" id="btnShareClose">닫기</button>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.5">
-      <span>🔗 짧은 주소 · 30일 후 자동 삭제</span>
-      <span>📦 서버 저장 없음 · 평생 유효 · 주소 김</span>
     </div>
 
     <div id="shareLinkSection" style="display:none;margin-top:14px;border-top:1px solid var(--hairline);padding-top:12px;flex-direction:column;gap:6px;text-align:left;">
