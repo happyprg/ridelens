@@ -220,8 +220,13 @@
         <a class="btn" href="https://buy.polar.sh/polar_cl_dQZ7CUIWhFBqY4I4dVKC2WsV79xJxsMdAqfPH3eAvat" target="_blank" rel="noopener">평생 소장 구매</a>
       </div>
     </div>
-    <!-- 커피 후원 버튼은 내림 — Polar 정책상 디지털 상품 없는 순수 후원 상품 금지 (2026-07-14 계정 심사 거절 사유).
-         후원을 다시 열려면 Buy Me a Coffee 등 별도 서비스로. -->
+    <!-- 커피 후원 — Polar가 아닌 외부 송금 링크(토스아이디 등)로 처리. Polar 정책(순수 후원 상품 금지)과 무관한 별도 경로.
+         SUPPORT_URL(페이지 하단 스크립트)이 비어 있으면 이 블록은 표시되지 않는다. -->
+    <div id="supportWrap" style="display:none;text-align:center;margin-top:32px;padding-top:26px;border-top:1px solid var(--edge)">
+      <p style="color:var(--ink2);font-size:14px;margin:0 0 12px">Pro가 필요 없어도 이 프로젝트가 마음에 드셨다면 — 아무 기능도 열리지 않는 순수 응원입니다.</p>
+      <a class="btn" id="supportBtn" target="_blank" rel="noopener">☕ 커피 한 잔 후원하기</a>
+      <p style="color:var(--ink2);font-size:13px;margin:10px 0 0">토스 링크로 열립니다 · 금액은 자유</p>
+    </div>
 
   </div>
 </section>
