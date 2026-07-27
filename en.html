@@ -55,6 +55,30 @@
       <img src="./shot-report-en.png" alt="RideLens ride report — distance, power and heart-rate tiles, region banner, rider card with ability ratings" loading="lazy">
     </div>
   </div>
+
+  <section id="demo-sandbox" style="padding: 10px 0 40px;">
+    <div class="wrap">
+      <div style="background:var(--panel);border:1px solid var(--edge);border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;border-bottom:1px solid var(--edge);padding-bottom:16px;">
+          <div>
+            <span style="font-size:12px;font-weight:700;color:var(--amber);letter-spacing:.15em;text-transform:uppercase;">⚡ Live Interactive Sandbox</span>
+            <h3 style="margin:4px 0 0;font-size:20px;font-weight:800;">Instant 3-second analysis preview — no upload needed</h3>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="demo-btn active" id="btn-namsan" onclick="switchDemoTab('namsan')" style="background:var(--amber);color:#121620;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13.5px;transition:all .2s;">🏔️ Mountain Climb</button>
+            <button class="demo-btn" id="btn-hanriver" onclick="switchDemoTab('hanriver')" style="background:var(--panel2);color:var(--ink2);border:1px solid var(--edge);padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13.5px;transition:all .2s;">🚴 Flat Endurance</button>
+            <button class="demo-btn" id="btn-crit" onclick="switchDemoTab('crit')" style="background:var(--panel2);color:var(--ink2);border:1px solid var(--edge);padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13.5px;transition:all .2s;">⚡ Criterium Sprint</button>
+          </div>
+        </div>
+        <div id="demo-sandbox-content" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:14px;">
+        </div>
+        <div style="margin-top:20px;text-align:center;background:rgba(240,166,58,0.06);border:1px dashed rgba(240,166,58,0.3);border-radius:12px;padding:14px;">
+          <span style="font-size:14px;color:var(--ink2);">👉 Want to analyze your own FIT/GPX ride file? </span>
+          <a class="btn hot sm" href="./app.html" target="_blank" rel="noopener" style="margin-left:8px;">Start Free Analysis</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </header>
 
 <section id="social">
@@ -342,7 +366,7 @@
   </div>
 </footer>
 
-<script>document.getElementById("supportBtn").href="https://buy.polar.sh/polar_cl_FYJw4bZGBvbBIzijupKlkPwvVzGvy1MKH4cKz3BJR7j",document.getElementById("supportWrap").style.display="",function(){const t=["unlo","ve60"].join(""),e=["gmail","com"].join(".");document.querySelectorAll(".mailme").forEach(n=>{const o=t+"@"+e;n.href="mailto:"+o+(n.dataset.subject?"?subject="+encodeURIComponent(n.dataset.subject):""),n.dataset.show&&(n.textContent=o)})}(),function(){const t=document.getElementById("ridge");if(!t||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const e=t.getContext("2d");let n=0,o=null;function i(){n=t.width=innerWidth}i(),addEventListener("resize",i);const a=340;function r(t){return.42*Math.sin(.0032*t)+.25*Math.sin(.0071*t+1.7)+.14*Math.sin(.017*t+.4)}requestAnimationFrame(function t(i){null===o&&(o=i);const l=Math.min(1,(i-o)/2600),c=1-Math.pow(1-l,3);e.clearRect(0,0,n,a);const s=n*c;e.beginPath();for(let t=0;t<=s;t+=4){const n=210.8-110*r(t);t?e.lineTo(t,n):e.moveTo(t,n)}e.strokeStyle="rgba(240,166,58,.55)",e.lineWidth=1.6,e.stroke(),e.lineTo(s,a),e.lineTo(0,a),e.closePath();const d=e.createLinearGradient(0,68,0,a);d.addColorStop(0,"rgba(240,166,58,.10)"),d.addColorStop(1,"rgba(240,166,58,0)"),e.fillStyle=d,e.fill(),l<1&&requestAnimationFrame(t)})}();</script>
+<script>document.getElementById("supportBtn").href="https://buy.polar.sh/polar_cl_FYJw4bZGBvbBIzijupKlkPwvVzGvy1MKH4cKz3BJR7j",document.getElementById("supportWrap").style.display="",function(){const e=["unlo","ve60"].join(""),t=["gmail","com"].join(".");document.querySelectorAll(".mailme").forEach(n=>{const a=e+"@"+t;n.href="mailto:"+a+(n.dataset.subject?"?subject="+encodeURIComponent(n.dataset.subject):""),n.dataset.show&&(n.textContent=a)})}(),function(){const e=document.getElementById("ridge");if(!e||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const t=e.getContext("2d");let n=0,a=null;function o(){n=e.width=innerWidth}o(),addEventListener("resize",o);const l=340;function r(e){return.42*Math.sin(.0032*e)+.25*Math.sin(.0071*e+1.7)+.14*Math.sin(.017*e+.4)}requestAnimationFrame(function e(o){null===a&&(a=o);const i=Math.min(1,(o-a)/2600),d=1-Math.pow(1-i,3);t.clearRect(0,0,n,l);const s=n*d;t.beginPath();for(let e=0;e<=s;e+=4){const n=210.8-110*r(e);e?t.lineTo(e,n):t.moveTo(e,n)}t.strokeStyle="rgba(240,166,58,.55)",t.lineWidth=1.6,t.stroke(),t.lineTo(s,l),t.lineTo(0,l),t.closePath();const c=t.createLinearGradient(0,68,0,l);c.addColorStop(0,"rgba(240,166,58,.10)"),c.addColorStop(1,"rgba(240,166,58,0)"),t.fillStyle=c,t.fill(),i<1&&requestAnimationFrame(e)})}(),function(){const e={namsan:[{label:"Normalized Power",value:"265 W",note:"IF 0.92 (High Intensity)"},{label:"Elevation Gain",value:"480 m",note:"Max Gradient 12.4%"},{label:"VO2max Estimate",value:"52.4 ml/kg",note:"Based on 5-min 310W"},{label:"VAM (Ascent Rate)",value:"1,150 m/h",note:"Cat 2 Climber Rating"}],hanriver:[{label:"Distance",value:"65.2 km",note:"Avg Speed 31.4 km/h"},{label:"Training Load",value:"142 TSS",note:"Session RPE 7/10"},{label:"Heat Adaptation",value:"+8.5%",note:"Power/HR at 29°C vs ≤22°C"},{label:"Chain Wear Alert",value:"320 km left",note:"Tracked in Bike Garage"}],crit:[{label:"5-min Peak Power",value:"340 W",note:"4.8 W/kg W-to-W"},{label:"Max Heart Rate",value:"188 bpm",note:"Avg 168 bpm"},{label:"Rider Persona",value:"⚡ Sprinter",note:"Lv.14 Legend Class"},{label:"Social Card Share",value:"Square Format",note:"1-Click Clipboard Copy"}]};window.switchDemoTab=function(t){document.querySelectorAll(".demo-btn").forEach(e=>{e.style.background="var(--panel2)",e.style.color="var(--ink2)",e.style.border="1px solid var(--edge)"});const n=document.getElementById("btn-"+t);n&&(n.style.background="var(--amber)",n.style.color="#121620",n.style.border="none");const a=document.getElementById("demo-sandbox-content");a&&e[t]&&(a.innerHTML=e[t].map(e=>`\n      <div style="background:var(--panel2);border:1px solid var(--edge);border-radius:12px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,0.2);">\n        <div style="font-size:12.5px;color:var(--muted);margin-bottom:4px;">${e.label}</div>\n        <div style="font-size:22px;font-weight:800;color:var(--amber);letter-spacing:-.02em;">${e.value}</div>\n        <div style="font-size:12px;color:var(--ink2);margin-top:4px;">${e.note}</div>\n      </div>\n    `).join(""))},setTimeout(()=>{switchDemoTab("namsan")},50)}();</script>
 
 </body>
 </html>
