@@ -15,14 +15,17 @@ const SHARE_BOX = "ridelens-shared";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
-/* ---------------- 주간 알림 ----------------
+/* ---------------- 알림 ----------------
    서버는 **본문 없는 푸시**를 보낸다. "깨워라"만 말하고 무슨 말을 할지는 모른다.
-   문장은 여기서 이 기기의 보관함(IndexedDB)을 직접 읽어 만든다 — "지난주 78km 타셨네요"가
-   우리 서버를 거치지 않고 나온다. 서버가 저장하는 것은 브라우저가 준 푸시 주소뿐이다.
+   문장은 전부 여기서 만든다:
+     · 나에 대한 것(주간 요약·스트릭·목표·계획·정비)은 이 기기의 보관함을 직접 읽어서
+     · 친구가 보낸 것은 서버에서 **상용구 번호**만 받아 여기서 문장으로 바꿔서
+   그래서 서버는 무슨 말이 뜨는지 모르고, 한국어·영어 전환도 이 기기에서 된다.
 
-   보관함이 비어 있거나 못 읽으면 일반 문구로 대신한다(알림을 안 띄우면 브라우저가
-   '조용한 푸시'로 보고 권한을 회수한다 — userVisibleOnly 계약이다). */
+   보관함이 비어 있거나 못 읽어도 반드시 하나는 띄운다 — 알림을 안 띄우면 브라우저가
+   '조용한 푸시'로 보고 권한을 회수한다(userVisibleOnly 계약). */
 const DB = "ridelens";
+const API = "https://ridelens-api.hongsgo.workers.dev";
 
 function rides(){
   return new Promise((res) => {
@@ -47,35 +50,157 @@ function rides(){
   });
 }
 
-function weeklyMessage(list){
+/* 앱이 남겨 둔 '알림용 요약'. 스트릭·목표·배지·계획 같은 것은 계산에 설정값이 필요한데
+   서비스 워커는 localStorage를 못 본다. 그래서 앱이 열릴 때마다 **숫자만** 여기에 적어 두고
+   (문장이 아니라 숫자다 — 문장은 언어 전환 때문에 여기서 만든다) 그걸 읽어 쓴다. */
+function snapshot(){
+  return new Promise((res) => {
+    let done = false;
+    const fin = (v) => { if (!done){ done = true; res(v); } };
+    setTimeout(() => fin(null), 3000);
+    try {
+      const rq = indexedDB.open(DB, 2);
+      rq.onerror = () => fin(null);
+      rq.onsuccess = () => {
+        try {
+          const db = rq.result;
+          if (!db.objectStoreNames.contains("kv")) return fin(null);
+          const g = db.transaction("kv").objectStore("kv").get("notify");
+          g.onsuccess = () => fin(g.result || null);
+          g.onerror = () => fin(null);
+        } catch (e) { fin(null); }
+      };
+      rq.onupgradeneeded = () => { try { rq.transaction.abort(); } catch (e) {} fin(null); };
+    } catch (e) { fin(null); }
+  });
+}
+
+/* 친구가 고른 상용구. 서버에는 **번호만** 오간다 — 문장은 여기 있고, 그래서 서버는 무슨 말이
+   뜨는지 모르며 받는 사람의 언어로 나온다. 번호는 절대 재배치하지 말 것(이미 큐에 든 것이
+   다른 문장으로 바뀐다). 새 문구는 뒤에 추가만 한다. */
+const POKE = [
+  { ko: "오늘 한 바퀴 어때요?",            en: "Fancy a ride today?" },
+  { ko: "요즘 안 보이시네요",              en: "Haven't seen you out lately" },
+  { ko: "주말에 같이 갑시다",              en: "Let's ride this weekend" },
+  { ko: "제가 앞서갑니다 🏆",              en: "I'm pulling ahead 🏆" },
+  { ko: "날씨 좋은데 나가시죠",            en: "Weather's perfect — let's go" },
+  { ko: "이번 주 목표 잊지 않으셨죠?",     en: "Remember your goal this week?" },
+  { ko: "한강 어때요?",                    en: "How about a river loop?" },
+  { ko: "장비만 닦고 계신 건 아니죠?",     en: "Not just polishing the bike, right?" }
+];
+const T = (lang, ko, en) => (lang === "en" ? en : ko);
+
+/* 서버에서 배달 대기 중인 것을 가져온다(읽는 즉시 서버에서 비워진다).
+   실패해도 조용히 빈 배열 — 그 경우 아래의 '나에 대한 알림'이 대신 뜬다. */
+async function inbox(){
+  try {
+    const sub = await self.registration.pushManager.getSubscription();
+    if (!sub) return [];
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(`${API}/api/push/inbox`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint }), signal: ctl.signal
+    });
+    clearTimeout(t);
+    if (!r.ok) return [];
+    const j = await r.json();
+    return Array.isArray(j.items) ? j.items.slice(0, 3) : [];
+  } catch (e) { return []; }
+}
+
+// 친구가 보낸 것 한 건 → 알림 한 장. 계획 초대는 누르면 그 계획서가 열린다.
+function friendMessage(it, lang){
+  const who = it.frm || T(lang, "친구", "A friend");
+  if (it.kind === "plan")
+    return { title: T(lang, `${who}님이 같이 타자고 합니다`, `${who} wants to ride with you`),
+             body: T(lang, "계획서를 열어 코스·휴식·보급을 확인해 보세요.", "Open the plan to see the route, stops and supplies."),
+             open: it.ref ? `./app.html?plan=${it.ref}` : "./app.html", tag: "ridelens-plan-" + (it.ref || "") };
+  const line = POKE[it.tpl] || POKE[0];
+  return { title: T(lang, `${who}님이 콕 찔렀습니다`, `${who} poked you`),
+           body: T(lang, line.ko, line.en), open: "./app.html", tag: "ridelens-poke" };
+}
+
+/* 나에 대한 알림. 앱이 "지금 이걸 알릴 만하다"고 골라 둔 종류(kind)를 그대로 쓴다 —
+   무엇이 급한지는 설정·목표를 다 아는 앱이 판단하는 편이 정확하다. 종류가 없으면 주간 요약. */
+function selfMessage(snap, list){
+  const lang = (snap && snap.lang) === "en" ? "en" : "ko";
+  const s = snap || {};
+  if (s.kind === "streak" && s.streak && s.streak.n > 0)
+    return { title: T(lang, `${s.streak.n}주 연속이 오늘 끊깁니다`, `Your ${s.streak.n}-week streak ends today`),
+             body: T(lang, "20분만 타도 이어집니다 — 기록은 자동으로 쌓입니다.", "Twenty minutes keeps it alive."),
+             open: "./app.html", tag: "ridelens-streak" };
+  if (s.kind === "goal" && s.goal && s.goal.left > 0)
+    return { title: T(lang, `${s.goal.label} — ${s.goal.left}${s.goal.unit || "km"} 남았어요`, `${s.goal.label} — ${s.goal.left}${s.goal.unit || "km"} to go`),
+             body: T(lang, "한 번이면 됩니다. 이번 주 안에 채워 보시죠.", "One ride should do it."),
+             open: "./app.html", tag: "ridelens-goal" };
+  if (s.kind === "badge" && s.badge && s.badge.name)
+    return { title: T(lang, `🏅 ${s.badge.name} 배지가 코앞입니다`, `🏅 Almost got the ${s.badge.name} badge`),
+             body: s.badge.need || T(lang, "한 번만 더 타면 됩니다.", "One more ride to go."),
+             open: "./app.html", tag: "ridelens-badge" };
+  if (s.kind === "plan" && s.plan && s.plan.name)
+    return { title: T(lang, `내일 ${s.plan.name}`, `Tomorrow: ${s.plan.name}`),
+             body: T(lang, `물 ${s.plan.water || 2}통 · 보급 ${s.plan.stops || 0}회 예정입니다.`,
+                          `${s.plan.water || 2} bottles · ${s.plan.stops || 0} resupply stops.`),
+             open: s.plan.id ? `./app.html?plan=${s.plan.id}` : "./app.html", tag: "ridelens-plan" };
+  if (s.kind === "care" && s.care && s.care.part)
+    return { title: T(lang, `${s.care.part} 관리할 때가 됐습니다`, `Time to service your ${s.care.part}`),
+             body: T(lang, `마지막 정비 후 ${s.care.km}km 탔습니다.`, `${s.care.km} km since the last service.`),
+             open: "./app.html", tag: "ridelens-care" };
+  if (s.kind === "anniv" && s.anniv && s.anniv.km)
+    return { title: T(lang, `${s.anniv.years || 1}년 전 오늘, ${s.anniv.km}km`, `${s.anniv.years || 1} year ago today: ${s.anniv.km} km`),
+             body: s.anniv.name || T(lang, "그날의 기록이 보관함에 있습니다.", "That ride is still in your library."),
+             open: "./app.html", tag: "ridelens-anniv" };
+  const m = weeklyMessage(list, lang);
+  return { title: m.title, body: m.body, open: "./app.html", tag: "ridelens-weekly" };
+}
+
+function weeklyMessage(list, lang){
   const now = Date.now(), DAY = 86400000;
+  const t = (ko, en) => (lang === "en" ? en : ko);
   const km = (a) => Math.round(a.reduce((s, r) => s + (((r.stats || {}).distance) || 0), 0) / 1000);
   const inRange = (from, to) => list.filter(r => r.date >= now - from * DAY && r.date < now - to * DAY);
   const thisWeek = inRange(7, 0), lastWeek = inRange(14, 7);
   if (!list.length)
-    return { title: "이번 주 라이딩, 기록해 두셨나요?", body: "파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다." };
+    return { title: t("이번 주 라이딩, 기록해 두셨나요?", "Logged a ride this week?"),
+             body: t("파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다.", "Drop one file and the report is ready in 3 seconds.") };
   if (thisWeek.length)
-    return { title: `이번 주 ${km(thisWeek)}km · ${thisWeek.length}회 타셨어요`,
-             body: lastWeek.length ? `지난주는 ${km(lastWeek)}km였습니다. 주간 랭킹도 확인해 보세요.`
-                                   : "주간 랭킹은 월요일에 0으로 초기화됩니다." };
+    return { title: t(`이번 주 ${km(thisWeek)}km · ${thisWeek.length}회 타셨어요`, `${km(thisWeek)} km over ${thisWeek.length} rides this week`),
+             body: lastWeek.length ? t(`지난주는 ${km(lastWeek)}km였습니다. 주간 랭킹도 확인해 보세요.`, `Last week was ${km(lastWeek)} km. Check the weekly ranking.`)
+                                   : t("주간 랭킹은 월요일에 0으로 초기화됩니다.", "The weekly ranking resets on Monday.") };
   if (lastWeek.length)
-    return { title: `지난주엔 ${km(lastWeek)}km 타셨네요`, body: "이번 주는 아직 기록이 없습니다. 주말에 한 번 나가시죠." };
+    return { title: t(`지난주엔 ${km(lastWeek)}km 타셨네요`, `You rode ${km(lastWeek)} km last week`),
+             body: t("이번 주는 아직 기록이 없습니다. 주말에 한 번 나가시죠.", "Nothing logged this week yet — how about the weekend?") };
   const last = list.slice().sort((a, b) => (b.date || 0) - (a.date || 0))[0];
   const days = Math.max(1, Math.round((now - (last.date || now)) / DAY));
-  return { title: `마지막 라이딩이 ${days}일 전이었어요`, body: "가볍게 한 바퀴 어떠세요. 기록은 그대로 기다리고 있습니다." };
+  return { title: t(`마지막 라이딩이 ${days}일 전이었어요`, `Your last ride was ${days} days ago`),
+           body: t("가볍게 한 바퀴 어떠세요. 기록은 그대로 기다리고 있습니다.", "How about an easy loop? Your records are waiting.") };
 }
 
 self.addEventListener("push", (e) => {
   e.waitUntil((async () => {
-    let m;
-    try { m = weeklyMessage(await rides()); }
-    catch (err) { m = { title: "이번 주 라이딩, 기록해 두셨나요?", body: "파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다." }; }
-    await self.registration.showNotification("🚴 " + m.title, {
-      body: m.body, tag: "ridelens-weekly", renotify: false,
-      icon: "./logo-icon.png", badge: "./logo-icon.png", data: { open: "./app.html" }
-    });
+    let shown = 0;
+    try {
+      const [items, snap] = await Promise.all([inbox(), snapshot()]);
+      const lang = (snap && snap.lang) === "en" ? "en" : "ko";
+      // 친구가 보낸 것이 먼저다 — 사람이 부른 것을 잔소리 뒤에 세우지 않는다
+      for (const it of items) {
+        const m = friendMessage(it, lang);
+        await show(m); shown++;
+      }
+      if (!shown) await show(selfMessage(snap, await rides()));
+      shown = 1;
+    } catch (err) { /* 아래에서 반드시 하나는 띄운다 */ }
+    if (!shown) await show({ title: "이번 주 라이딩, 기록해 두셨나요?", body: "파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다.", open: "./app.html", tag: "ridelens-weekly" });
   })());
 });
+
+function show(m){
+  return self.registration.showNotification("🚴 " + m.title, {
+    body: m.body, tag: m.tag || "ridelens", renotify: false,
+    icon: "./logo-icon.png", badge: "./logo-icon.png", data: { open: m.open || "./app.html" }
+  });
+}
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
@@ -83,8 +208,14 @@ self.addEventListener("notificationclick", (e) => {
   e.waitUntil((async () => {
     const url = new URL(to, self.registration.scope).href;
     const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    // 이미 열린 창이 있으면 그걸 앞으로 — 새 탭을 계속 쌓지 않는다
-    for (const w of wins) if (w.url.startsWith(self.registration.scope) && "focus" in w) return w.focus();
+    for (const w of wins) {
+      if (!w.url.startsWith(self.registration.scope) || !("focus" in w)) continue;
+      /* 이미 열린 창이 있으면 그걸 앞으로 — 새 탭을 계속 쌓지 않는다. 다만 계획 초대처럼
+         **열어야 할 곳이 따로 있는** 알림은 창을 앞으로만 가져오면 아무 일도 안 일어난 것처럼
+         보인다(친구가 부른 계획서가 아니라 원래 보던 화면이 뜬다). 그때는 그 주소로 옮긴다. */
+      if (url !== w.url && new URL(url).search && "navigate" in w) { try { await w.navigate(url); } catch (e) {} }
+      return w.focus();
+    }
     return self.clients.openWindow(url);
   })());
 });
