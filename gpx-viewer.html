@@ -3,25 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GPX 파일 보는 법 — 경로·고도·오르막을 브라우저에서 (가입 없이)</title>
-<meta name="description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급까지 브라우저에서 봅니다.">
+<title>GPX 파일 보는 법 — 경로·고도·오르막을 한눈에</title>
+<meta name="description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급을 보고, 완주 가능성과 쉴 자리까지 계산해 볼 수 있습니다.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RideLens">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:title" content="GPX 파일 보는 법 — 경로·고도·오르막을 브라우저에서 (가입 없이)">
-<meta property="og:description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급까지 브라우저에서 봅니다.">
+<meta property="og:title" content="GPX 파일 보는 법 — 경로·고도·오르막을 한눈에">
+<meta property="og:description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급을 보고, 완주 가능성과 쉴 자리까지 계산해 볼 수 있습니다.">
 <meta property="og:url" content="https://happyprg.github.io/ridelens/gpx-viewer.html">
 <meta property="og:image" content="https://happyprg.github.io/ridelens/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="GPX 파일 보는 법 — 경로·고도·오르막을 브라우저에서 (가입 없이)">
-<meta name="twitter:description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급까지 브라우저에서 봅니다.">
+<meta name="twitter:title" content="GPX 파일 보는 법 — 경로·고도·오르막을 한눈에">
+<meta name="twitter:description" content="받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급을 보고, 완주 가능성과 쉴 자리까지 계산해 볼 수 있습니다.">
 <meta name="twitter:image" content="https://happyprg.github.io/ridelens/og.png">
 <link rel="canonical" href="https://happyprg.github.io/ridelens/gpx-viewer.html">
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"GPX 파일에는 무엇이 들어 있나요?","acceptedAnswer":{"@type":"Answer","text":"보통 위치·고도·시각입니다. 실제로 다녀온 기록(트랙)과 앞으로 갈 코스(루트)가 구분되고, 심박·파워는 표준에 없어 있더라도 확장 태그로 들어갑니다."}},{"@type":"Question","name":"고도가 이상하게 나옵니다","acceptedAnswer":{"@type":"Answer","text":"GPS 고도는 오차가 큽니다. 기압계 없는 폰으로 기록한 파일은 획득고도가 부풀려집니다. 고도를 평활화해 계산하지만 원본이 튀면 한계가 있습니다."}},{"@type":"Question","name":"코스를 사이컴에 넣고 싶어요","acceptedAnswer":{"@type":"Answer","text":"계획을 세운 뒤 GPX나 가민 코스(FIT)로 내보내면 됩니다. FIT 코스로 넣으면 기기가 다음 휴식 지점까지 남은 거리를 띄웁니다."}}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"RideLens","applicationCategory":"SportsApplication","operatingSystem":"Web","url":"https://happyprg.github.io/ridelens/","description":"받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급까지 브라우저에서 봅니다.","inLanguage":"ko","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"RideLens","applicationCategory":"SportsApplication","operatingSystem":"Web","url":"https://happyprg.github.io/ridelens/","description":"받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급을 보고, 완주 가능성과 쉴 자리까지 계산해 볼 수 있습니다.","inLanguage":"ko","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body>
 <style>
