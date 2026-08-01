@@ -15,6 +15,80 @@ const SHARE_BOX = "ridelens-shared";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
+/* ---------------- 주간 알림 ----------------
+   서버는 **본문 없는 푸시**를 보낸다. "깨워라"만 말하고 무슨 말을 할지는 모른다.
+   문장은 여기서 이 기기의 보관함(IndexedDB)을 직접 읽어 만든다 — "지난주 78km 타셨네요"가
+   우리 서버를 거치지 않고 나온다. 서버가 저장하는 것은 브라우저가 준 푸시 주소뿐이다.
+
+   보관함이 비어 있거나 못 읽으면 일반 문구로 대신한다(알림을 안 띄우면 브라우저가
+   '조용한 푸시'로 보고 권한을 회수한다 — userVisibleOnly 계약이다). */
+const DB = "ridelens";
+
+function rides(){
+  return new Promise((res) => {
+    let done = false;
+    const fin = (v) => { if (!done){ done = true; res(v); } };
+    setTimeout(() => fin([]), 3000);                       // IndexedDB가 안 열리면 그냥 포기한다
+    try {
+      const rq = indexedDB.open(DB, 2);
+      rq.onerror = () => fin([]);
+      rq.onsuccess = () => {
+        try {
+          const db = rq.result;
+          if (!db.objectStoreNames.contains("rides")) return fin([]);
+          const g = db.transaction("rides").objectStore("rides").getAll();
+          g.onsuccess = () => fin(g.result || []);
+          g.onerror = () => fin([]);
+        } catch (e) { fin([]); }
+      };
+      // 알림 때문에 스키마를 만들지는 않는다 — 앱을 한 번도 안 쓴 기기면 그냥 비운다
+      rq.onupgradeneeded = () => { try { rq.transaction.abort(); } catch (e) {} fin([]); };
+    } catch (e) { fin([]); }
+  });
+}
+
+function weeklyMessage(list){
+  const now = Date.now(), DAY = 86400000;
+  const km = (a) => Math.round(a.reduce((s, r) => s + (((r.stats || {}).distance) || 0), 0) / 1000);
+  const inRange = (from, to) => list.filter(r => r.date >= now - from * DAY && r.date < now - to * DAY);
+  const thisWeek = inRange(7, 0), lastWeek = inRange(14, 7);
+  if (!list.length)
+    return { title: "이번 주 라이딩, 기록해 두셨나요?", body: "파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다." };
+  if (thisWeek.length)
+    return { title: `이번 주 ${km(thisWeek)}km · ${thisWeek.length}회 타셨어요`,
+             body: lastWeek.length ? `지난주는 ${km(lastWeek)}km였습니다. 주간 랭킹도 확인해 보세요.`
+                                   : "주간 랭킹은 월요일에 0으로 초기화됩니다." };
+  if (lastWeek.length)
+    return { title: `지난주엔 ${km(lastWeek)}km 타셨네요`, body: "이번 주는 아직 기록이 없습니다. 주말에 한 번 나가시죠." };
+  const last = list.slice().sort((a, b) => (b.date || 0) - (a.date || 0))[0];
+  const days = Math.max(1, Math.round((now - (last.date || now)) / DAY));
+  return { title: `마지막 라이딩이 ${days}일 전이었어요`, body: "가볍게 한 바퀴 어떠세요. 기록은 그대로 기다리고 있습니다." };
+}
+
+self.addEventListener("push", (e) => {
+  e.waitUntil((async () => {
+    let m;
+    try { m = weeklyMessage(await rides()); }
+    catch (err) { m = { title: "이번 주 라이딩, 기록해 두셨나요?", body: "파일 하나만 넣으면 3초 뒤에 리포트가 나옵니다." }; }
+    await self.registration.showNotification("🚴 " + m.title, {
+      body: m.body, tag: "ridelens-weekly", renotify: false,
+      icon: "./logo-icon.png", badge: "./logo-icon.png", data: { open: "./app.html" }
+    });
+  })());
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const to = (e.notification.data && e.notification.data.open) || "./app.html";
+  e.waitUntil((async () => {
+    const url = new URL(to, self.registration.scope).href;
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    // 이미 열린 창이 있으면 그걸 앞으로 — 새 탭을 계속 쌓지 않는다
+    for (const w of wins) if (w.url.startsWith(self.registration.scope) && "focus" in w) return w.focus();
+    return self.clients.openWindow(url);
+  })());
+});
+
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   // 공유로 들어온 POST만 처리한다 — 그 외의 요청은 건드리지 않는다(캐시도, 변형도 없음)
