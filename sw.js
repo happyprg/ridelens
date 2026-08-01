@@ -89,6 +89,8 @@ const POKE = [
   { ko: "장비만 닦고 계신 건 아니죠?",     en: "Not just polishing the bike, right?" }
 ];
 const T = (lang, ko, en) => (lang === "en" ? en : ko);
+// 알림을 누르면 어디로 갈지 — 계획 브리핑만 그 계획서로 가고 나머지는 앱 첫 화면이다
+const openFor = (s) => (s.kind === "plan" && s.plan && s.plan.id) ? `./app.html?plan=${s.plan.id}` : "./app.html";
 
 /* 서버에서 배달 대기 중인 것을 가져온다(읽는 즉시 서버에서 비워진다).
    실패해도 조용히 빈 배열 — 그 경우 아래의 '나에 대한 알림'이 대신 뜬다. */
@@ -126,6 +128,11 @@ function friendMessage(it, lang){
 function selfMessage(snap, list){
   const lang = (snap && snap.lang) === "en" ? "en" : "ko";
   const s = snap || {};
+  /* AI 코치 키를 넣어 둔 사람은 그 코치가 미리 써 둔 문장으로 나간다(앱이 열려 있을 때 받아
+     둔다 — 여기서는 키를 읽을 수도, LLM을 기다릴 수도 없다). 상황이 그 사이 바뀌었으면
+     (aiKind !== kind) 쓰지 않는다 — 지난주 문장이 이번 주에 뜨는 것이 제일 나쁘다. */
+  if (s.ai && s.ai.title && s.aiKind === s.kind)
+    return { title: s.ai.title, body: s.ai.body || "", open: openFor(s), tag: "ridelens-" + s.kind };
   if (s.kind === "streak" && s.streak && s.streak.n > 0)
     return { title: T(lang, `${s.streak.n}주 연속이 오늘 끊깁니다`, `Your ${s.streak.n}-week streak ends today`),
              body: T(lang, "20분만 타도 이어집니다 — 기록은 자동으로 쌓입니다.", "Twenty minutes keeps it alive."),
@@ -147,8 +154,8 @@ function selfMessage(snap, list){
     return { title: T(lang, `🏅 ${s.badge.name} 배지가 코앞입니다`, `🏅 Almost got the ${s.badge.name} badge`),
              body: s.badge.need || T(lang, "한 번만 더 타면 됩니다.", "One more ride to go."),
              open: "./app.html", tag: "ridelens-badge" };
-  if (s.kind === "plan" && s.plan && s.plan.name)
-    return { title: T(lang, `내일 ${s.plan.name}`, `Tomorrow: ${s.plan.name}`),
+  if (s.kind === "plan" && s.plan && s.plan.km)
+    return { title: T(lang, `내일 ${s.plan.km}km 라이딩`, `Tomorrow: ${s.plan.km} km`),
              body: T(lang, `물 ${s.plan.water || 2}통 · 보급 ${s.plan.stops || 0}회 예정입니다.`,
                           `${s.plan.water || 2} bottles · ${s.plan.stops || 0} resupply stops.`),
              open: s.plan.id ? `./app.html?plan=${s.plan.id}` : "./app.html", tag: "ridelens-plan" };
