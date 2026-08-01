@@ -130,10 +130,19 @@ function selfMessage(snap, list){
     return { title: T(lang, `${s.streak.n}주 연속이 오늘 끊깁니다`, `Your ${s.streak.n}-week streak ends today`),
              body: T(lang, "20분만 타도 이어집니다 — 기록은 자동으로 쌓입니다.", "Twenty minutes keeps it alive."),
              open: "./app.html", tag: "ridelens-streak" };
-  if (s.kind === "goal" && s.goal && s.goal.left > 0)
-    return { title: T(lang, `${s.goal.label} — ${s.goal.left}${s.goal.unit || "km"} 남았어요`, `${s.goal.label} — ${s.goal.left}${s.goal.unit || "km"} to go`),
-             body: T(lang, "한 번이면 됩니다. 이번 주 안에 채워 보시죠.", "One ride should do it."),
+  if (s.kind === "goal" && s.goal && s.goal.left)
+    return { title: T(lang, `${s.goal.label} — ${s.goal.left} 남았어요`, `${s.goal.label} — ${s.goal.left} to go`),
+             body: T(lang, "한 번이면 됩니다. 기간이 끝나기 전에 채워 보시죠.", "One ride should do it — before the period ends."),
              open: "./app.html", tag: "ridelens-goal" };
+  if (s.kind === "quest" && s.quest && s.quest.left > 0)
+    return { title: T(lang, `이번 주 퀘스트 — ${s.quest.left}${s.quest.unit || "km"} 남았습니다`, `Weekly quest — ${s.quest.left}${s.quest.unit || "km"} to go`),
+             body: T(lang, `${s.quest.name} · 일요일 자정에 마감됩니다.`, `${s.quest.name} · ends at midnight Sunday.`),
+             open: "./app.html", tag: "ridelens-quest" };
+  if (s.kind === "rank" && s.rank && s.rank.n)
+    return { title: T(lang, `주간 랭킹 ${s.rank.n}위 — 월요일에 0으로 초기화됩니다`, `You're #${s.rank.n} — the board resets on Monday`),
+             body: s.rank.gap > 0 ? T(lang, `바로 위까지 ${s.rank.gap}km 남았어요. 한 번만 더 타면 넘습니다.`, `${s.rank.gap} km behind the rider above — one more ride does it.`)
+                                  : T(lang, "지금 순위로 이번 주가 마감됩니다.", "This is where you finish the week."),
+             open: "./app.html", tag: "ridelens-rank" };
   if (s.kind === "badge" && s.badge && s.badge.name)
     return { title: T(lang, `🏅 ${s.badge.name} 배지가 코앞입니다`, `🏅 Almost got the ${s.badge.name} badge`),
              body: s.badge.need || T(lang, "한 번만 더 타면 됩니다.", "One more ride to go."),
@@ -195,15 +204,26 @@ self.addEventListener("push", (e) => {
   })());
 });
 
+/* 어떤 종류가 실제로 먹히는지 익명으로 센다 — 띄운 수(notifs-)와 눌린 수(notifc-)를 함께 봐야
+   클릭률이 나온다. 감으로 알림 종류를 늘리지 않기 위한 것이다. 보내는 것은 종류 이름뿐이고,
+   기존 기능 통계와 같은 경로를 쓴다(쓰기 예산 가드도 그대로 적용된다). */
+function tally(kind){
+  try { fetch(`${API}/api/event`, { method: "POST", body: kind, keepalive: true }).catch(() => {}); } catch (e) {}
+}
+const kindOf = (tag) => String(tag || "").replace(/^ridelens-?/, "").replace(/[^a-z]/g, "") || "other";
+
 function show(m){
+  const tag = m.tag || "ridelens";
+  tally("notifs-" + kindOf(tag));
   return self.registration.showNotification("🚴 " + m.title, {
-    body: m.body, tag: m.tag || "ridelens", renotify: false,
-    icon: "./logo-icon.png", badge: "./logo-icon.png", data: { open: m.open || "./app.html" }
+    body: m.body, tag, renotify: false,
+    icon: "./logo-icon.png", badge: "./logo-icon.png", data: { open: m.open || "./app.html", kind: kindOf(tag) }
   });
 }
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
+  tally("notifc-" + ((e.notification.data && e.notification.data.kind) || "other"));
   const to = (e.notification.data && e.notification.data.open) || "./app.html";
   e.waitUntil((async () => {
     const url = new URL(to, self.registration.scope).href;
