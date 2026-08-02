@@ -434,8 +434,12 @@
       <p>Yes. RideLens is a static web page and all analysis code runs inside your browser.
       Open your dev tools' Network tab while analyzing a file — you won't see a single file upload request.</p>
       <p>Full honest disclosure: when you open the app, at most once a day, an anonymous visit-count signal is sent to our server, and pressing a major button sends just that button's name (at most once a day).
-      No cookies, no identifiers, no personal data, no ride data — only flags like "first visit today" — and no third-party analytics like Google Analytics.
-      Details are in the app under Help → Service Notice.</p>
+      No cookies, no identifiers, no personal data, no ride data — only flags like "first visit today" — and no third-party analytics like Google Analytics.</p>
+      <!-- '전체 공개'라고 써 놓고 지도 타일을 빼면 그게 제일 나쁘다(landing.html과 같은 이유). -->
+      <p>And <b>a map has to fetch pictures to draw itself</b> — every map view pulls tiles from <b>CARTO</b> and the map library from <b>unpkg</b>.
+      Those requests tell them <b>which patch of the world is on your screen</b> (the coordinates of a map tile, not your ride file).
+      Tapping the map to draw a course sends <b>the points you tapped</b> to <b>BRouter</b>, and the weather lookup (off by default) sends <b>coordinates rounded to about 1 km</b> to <b>open-meteo</b>.
+      None of them ever receive your ride file, your name, or an identifier. Details are in the app under Help → Service Notice.</p>
     </details>
     <details>
       <summary>Is the app available in English?</summary>
