@@ -1757,7 +1757,12 @@
             <option value="fun" data-en="🤩 Best day out">🤩 너무 즐거웠어요</option>
           </select></label>
       </div>
-      <canvas id="storyCanvas" width="720" height="1280" style="width:100%;max-width:300px;display:block;margin:0 auto;border-radius:14px;background:#0d0f13"></canvas>
+      <!-- 폭을 %로 잡지 말 것. 캔버스는 제 비율(720:1280)을 아는 요소라 width·height를 auto로
+           두고 max-* 로만 묶으면 알아서 비율을 지키며 줄어든다. 예전에 인라인으로 `width:100%`를
+           박아 두었더니 아래 `.modal.share canvas{width:auto}` 규칙을 인라인이 이겨서, 폭은
+           300px에 고정된 채 `max-height`만 높이를 잘랐다 — 폰에서 9:16 미리보기가 297×310의
+           납작한 상자로 찌그러졌다(실제 제품 화면이라고 내놓는 자리다, CLAUDE.md 14번). -->
+      <canvas id="storyCanvas" width="720" height="1280" style="width:auto;height:auto;max-width:min(300px,100%);max-height:52vh;display:block;margin:0 auto;border-radius:14px;background:#0d0f13"></canvas>
       <div style="display:flex;align-items:center;gap:10px;margin-top:9px">
         <button class="btn sm" id="btnStoryToggle" style="flex:none;min-width:44px" data-en="⏸">⏸</button>
         <input type="range" id="storySeek" min="0" max="1000" value="0" step="1" aria-label="재생 위치" data-en-aria="Playback position" style="flex:1;accent-color:var(--accent-t)">
