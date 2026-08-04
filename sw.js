@@ -249,8 +249,18 @@ self.addEventListener("notificationclick", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // 공유로 들어온 POST만 처리한다 — 그 외의 요청은 건드리지 않는다(캐시도, 변형도 없음)
-  if (e.request.method !== "POST" || !/\/share\/?$/.test(url.pathname)) return;
+  /* 공유로 들어온 POST만 처리한다 — 그 외의 요청은 건드리지 않는다(캐시도, 변형도 없음).
+     ⚠ **출처를 반드시 볼 것** (2026-08-04) — 예전에는 경로만 보고 `/share`로 끝나는 POST를
+     전부 잡았다. 그래서 앱이 공유 링크를 만들려고 부르는 우리 API(`…workers.dev/api/share`)까지
+     이 핸들러가 삼켰고, 여기서 돌려주는 건 303 리다이렉트라 **내비게이션이 아닌 fetch는 통째로
+     실패한다**(브라우저가 "Failed to fetch"). 결과는 서비스 워커가 붙은 기기 전부 — 즉 두 번째
+     방문부터 모든 사용자 — 에서 **공유 링크 생성이 안 되는** 것이었고, 라이브에서 대조 실험으로
+     확인했다(제어 전 200 `{id}` / 제어 후 Failed to fetch).
+     share_target 의 action 은 언제나 **같은 출처의 /share** 다(build-deploy.js). 남의 출처와
+     `/api/` 아래는 우리 것이 아니므로 손대지 않는다. */
+  if (e.request.method !== "POST") return;
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.includes("/api/") || !/\/share\/?$/.test(url.pathname)) return;
 
   e.respondWith((async () => {
     const to = new URL("app.html", url);
