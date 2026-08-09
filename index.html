@@ -626,5 +626,23 @@
 </div>
 <script>window.addEventListener("scroll",function(){var t=document.getElementById("stickyCta");t&&(window.scrollY>450?(t.style.opacity="1",t.style.transform="translateX(-50%) translateY(0)",t.style.pointerEvents="auto"):(t.style.opacity="0",t.style.transform="translateX(-50%) translateY(100px)",t.style.pointerEvents="none"))});</script>
 
+
+<link rel="canonical" href="https://happyprg.github.io/naajim/">
+<script id="naajim-moved-notice">(function(){
+  try{
+    var base = "https://happyprg.github.io/naajim/";
+    var file = (location.pathname.split("/").pop() || "");
+    var to = base + file + location.search + location.hash;
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#f0a63a;"
+      + "color:#211502;font:600 15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;"
+      + "padding:12px 14px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35)";
+    d.innerHTML = '이름이 <b>나아짐(Naajim)</b>으로 바뀌었습니다 — 새 주소는 '
+      + '<a href="' + to + '" style="color:#211502;font-weight:900">happyprg.github.io/naajim</a> 입니다. '
+      + '<span style="font-weight:400">저장된 기록은 그대로 따라옵니다.</span>';
+    var put = function(){ if (document.body && !document.getElementById("naajim-moved-notice-bar")){ d.id="naajim-moved-notice-bar"; document.body.appendChild(d); } };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", put); else put();
+  }catch(e){}
+})();</script>
 </body>
 </html>
