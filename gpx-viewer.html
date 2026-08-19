@@ -26,6 +26,19 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"RideLens","applicationCategory":"SportsApplication","operatingSystem":"Web Browser (Desktop & Mobile)","url":"https://happyprg.github.io/ridelens/gpx-viewer.html","description":"받아 둔 .gpx가 어떤 길인지, 얼마나 오르는지, 내가 갈 수 있는 코스인지 확인하는 방법. 업로드 없이 지도·고도 프로필·오르막 등급을 보고, 완주 가능성과 쉴 자리까지 계산해 볼 수 있습니다.","inLanguage":"ko","screenshot":["https://happyprg.github.io/ridelens/og.png","https://happyprg.github.io/ridelens/shot-report.png"],"featureList":["가민·와후 FIT/GPX 3초 브라우저 로컬 분석","100% 비공개 — 파일 서버 업로드 0Byte","입체 3D 경로 스토리 영상 자동 생성","NP · IF · TSS 및 오르막 등급(HC~4급) 자동 계산","AI 라이딩 코치 (키 없이 프롬프트 복사 / 내 API 키)","라이더 RPG 캐릭터 레벨 · XP · 잔디 · 도전과제","완주 가능성 및 휴식/보급 라이딩 계획서"],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"128","bestRating":"5"},"offers":[{"@type":"Offer","name":"영원히 무료","price":"0","priceCurrency":"USD","description":"FIT/GPX 분석 및 저장 무제한, 3D 영상, 잔디, 도전과제"},{"@type":"Offer","name":"Pro 월간","price":"1900","priceCurrency":"KRW","description":"훈련 부하 CTL/ATL/TSB, 자전거 무제한, 부품 교체 알림, AI 코치 키 연결"},{"@type":"Offer","name":"Pro 연간","price":"14900","priceCurrency":"KRW","description":"연간 결제 (2개월 무료)"},{"@type":"Offer","name":"Pro 평생 소장","price":"39900","priceCurrency":"KRW","description":"1회 결제 평생 소장 라이선스"}]}</script>
 </head>
 <body>
+<!--naajim-moved-notice-->
+<div id="naajim-moved-notice-bar" style="position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#f0a63a;color:#211502;font:600 15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;padding:12px 14px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35)">이름이 <b>나아짐(Naajim)</b>으로 바뀌었습니다 — 새 주소는 <a href="https://happyprg.github.io/naajim/gpx-viewer.html" style="color:#211502;font-weight:900">happyprg.github.io/naajim</a> 입니다. <span style="font-weight:400">저장된 기록은 그대로 따라옵니다.</span></div>
+<script id="naajim-moved-notice">(function(){
+  try{
+    /* 링크는 이미 HTML에 있다 — 여기서는 **들고 갈 것만 덧붙인다**(?share=… 같은 공유 링크).
+       스크립트가 실패해도 새 주소로 가는 길은 남는다. */
+    var a = document.querySelector("#naajim-moved-notice-bar a");
+    if (a && (location.search || location.hash))
+      a.href = a.href.split("?")[0].split("#")[0] + location.search + location.hash;
+  }catch(e){}
+})();</script>
+<!--/naajim-moved-notice-->
+
 <style>
 :root{--bg:#0b0d11;--panel:#12151c;--panel2:#171b24;--edge:#232a36;--ink:#e8ebf2;--ink2:#a7adba;--muted:#79808f;--amber:#f0a63a}
 @media(prefers-color-scheme:light){:root{--bg:#f7f8fa;--panel:#fff;--panel2:#f1f3f7;--edge:#dfe3ea;--ink:#1a1d23;--ink2:#4a5060;--muted:#6b7280}}
@@ -134,23 +147,5 @@ body{background:var(--bg);color:var(--ink);font:16px/1.75 system-ui,-apple-syste
     <a href="./strava-alternative.html">스트라바 없이 분석하기</a>
   </p>
 </article>
-
-
-<script id="naajim-moved-notice">(function(){
-  try{
-    var base = "https://happyprg.github.io/naajim/";
-    var file = (location.pathname.split("/").pop() || "");
-    var to = base + file + location.search + location.hash;
-    var d = document.createElement("div");
-    d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#f0a63a;"
-      + "color:#211502;font:600 15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;"
-      + "padding:12px 14px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35)";
-    d.innerHTML = '이름이 <b>나아짐(Naajim)</b>으로 바뀌었습니다 — 새 주소는 '
-      + '<a href="' + to + '" style="color:#211502;font-weight:900">happyprg.github.io/naajim</a> 입니다. '
-      + '<span style="font-weight:400">저장된 기록은 그대로 따라옵니다.</span>';
-    var put = function(){ if (document.body && !document.getElementById("naajim-moved-notice-bar")){ d.id="naajim-moved-notice-bar"; document.body.appendChild(d); } };
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", put); else put();
-  }catch(e){}
-})();</script>
 </body>
 </html>
